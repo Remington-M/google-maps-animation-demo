@@ -1,0 +1,1367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Google Maps Animation Demo</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f5f5f5;
+      min-height: 100vh;
+    }
+
+    .header {
+      background: #1a1a1a;
+      color: white;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .header h1 {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .api-key-input {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-left: auto;
+    }
+
+    .api-key-input input {
+      padding: 8px 12px;
+      border: none;
+      border-radius: 4px;
+      width: 300px;
+      font-size: 13px;
+    }
+
+    .api-key-input button {
+      padding: 8px 16px;
+      background: #4285f4;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    .api-key-input button:hover {
+      background: #3367d6;
+    }
+
+    .container {
+      display: flex;
+      height: calc(100vh - 60px);
+    }
+
+    .controls {
+      width: 340px;
+      background: white;
+      border-right: 1px solid #ddd;
+      padding: 20px;
+      overflow-y: auto;
+    }
+
+    .control-section {
+      margin-bottom: 24px;
+    }
+
+    .control-section h3 {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #666;
+      margin-bottom: 12px;
+    }
+
+    .control-group {
+      margin-bottom: 16px;
+    }
+
+    .control-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 6px;
+      color: #333;
+    }
+
+    .control-group select,
+    .control-group input[type="range"] {
+      width: 100%;
+    }
+
+    .control-group select {
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 13px;
+      background: white;
+    }
+
+    .control-group input[type="range"] {
+      height: 6px;
+      -webkit-appearance: none;
+      background: #e0e0e0;
+      border-radius: 3px;
+      outline: none;
+    }
+
+    .control-group input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      background: #4285f4;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+
+    .value-display {
+      font-size: 12px;
+      color: #666;
+      margin-top: 4px;
+      font-family: 'SF Mono', Monaco, monospace;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-primary {
+      background: #4285f4;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #3367d6;
+    }
+
+    .btn-primary:disabled {
+      background: #a0c4ff;
+      cursor: not-allowed;
+    }
+
+    .btn-secondary {
+      background: #e8e8e8;
+      color: #333;
+    }
+
+    .btn-secondary:hover {
+      background: #ddd;
+    }
+
+    .live-values {
+      background: #f8f8f8;
+      border-radius: 8px;
+      padding: 16px;
+    }
+
+    .live-values h3 {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #666;
+      margin-bottom: 12px;
+    }
+
+    .live-value-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+      border-bottom: 1px solid #eee;
+      font-size: 13px;
+    }
+
+    .live-value-row:last-child {
+      border-bottom: none;
+    }
+
+    .live-value-row .label {
+      color: #666;
+    }
+
+    .live-value-row .value {
+      font-family: 'SF Mono', Monaco, monospace;
+      color: #333;
+      font-weight: 500;
+    }
+
+    .progress-bar {
+      height: 4px;
+      background: #e0e0e0;
+      border-radius: 2px;
+      margin-top: 12px;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: #4285f4;
+      width: 0%;
+      transition: width 0.05s linear;
+    }
+
+    .map-container {
+      flex: 1;
+      position: relative;
+    }
+
+    #map {
+      width: 100%;
+      height: 100%;
+    }
+
+    .map-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: #666;
+      background: #e8e8e8;
+    }
+
+    .map-placeholder svg {
+      width: 64px;
+      height: 64px;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+
+    .info-panel {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      background: white;
+      padding: 12px 16px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      font-size: 12px;
+      max-width: 350px;
+    }
+
+    .info-panel strong {
+      color: #1a1a1a;
+    }
+
+    .info-panel code {
+      background: #f0f0f0;
+      padding: 1px 4px;
+      border-radius: 3px;
+      font-size: 11px;
+    }
+
+    .markers-legend {
+      margin-top: 16px;
+      padding: 12px;
+      background: #f0f7ff;
+      border-radius: 6px;
+      font-size: 12px;
+    }
+
+    .markers-legend .marker-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .markers-legend .marker-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .marker-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    .marker-dot.start {
+      background: #34a853;
+    }
+
+    .marker-dot.end {
+      background: #ea4335;
+    }
+
+    .custom-coords {
+      display: none;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid #eee;
+    }
+
+    .custom-coords.visible {
+      display: block;
+    }
+
+    .coord-input-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .coord-input-group input {
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 12px;
+      font-family: 'SF Mono', Monaco, monospace;
+    }
+
+    .coord-label {
+      font-size: 11px;
+      color: #666;
+      margin-bottom: 4px;
+    }
+
+    .algorithm-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      margin-left: 8px;
+    }
+
+    .algorithm-badge.vanwijk {
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
+
+    .algorithm-badge.simple {
+      background: #fff3e0;
+      color: #e65100;
+    }
+
+    .algorithm-info {
+      margin-top: 8px;
+      padding: 10px;
+      background: #fafafa;
+      border-radius: 6px;
+      font-size: 11px;
+      color: #666;
+      line-height: 1.5;
+    }
+
+    .algorithm-info a {
+      color: #4285f4;
+    }
+
+    .duration-info {
+      margin-top: 8px;
+      padding: 8px;
+      background: #e3f2fd;
+      border-radius: 4px;
+      font-size: 11px;
+      color: #1565c0;
+    }
+
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .checkbox-group input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+    }
+
+    .checkbox-group label {
+      font-size: 13px;
+      color: #333;
+      margin: 0;
+    }
+
+    .vanwijk-params {
+      padding: 12px;
+      background: #f5f5f5;
+      border-radius: 6px;
+      margin-top: 12px;
+    }
+
+    .vanwijk-params.hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Google Maps Animation Demo</h1>
+    <div class="api-key-input">
+      <input type="text" id="apiKey" placeholder="API Key" style="width: 200px;">
+      <input type="text" id="mapId" placeholder="Map ID (for vector maps)" style="width: 180px;">
+      <button onclick="loadMap()">Load Map</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="controls">
+      <div class="control-section">
+        <h3>Location Preset</h3>
+        <div class="control-group">
+          <select id="presetSelect" onchange="onPresetChange()">
+            <option value="florence">Florence: Stay → Restaurant (~5km)</option>
+            <option value="florence-reverse">Florence: Restaurant → Stay (~5km)</option>
+            <option value="london-paris">London → Paris (~350km)</option>
+            <option value="sf-nyc">San Francisco → New York (~4000km)</option>
+            <option value="sf-tokyo">San Francisco → Tokyo (cross-Pacific)</option>
+            <option value="tokyo-sydney">Tokyo → Sydney (~7800km)</option>
+            <option value="zoom-only">Zoom Only (same location)</option>
+            <option value="custom">Custom Coordinates</option>
+          </select>
+        </div>
+
+        <div id="customCoords" class="custom-coords">
+          <div class="coord-label">Start Point</div>
+          <div class="coord-input-group">
+            <input type="number" id="startLat" placeholder="Latitude" step="0.0001" value="43.7696">
+            <input type="number" id="startLng" placeholder="Longitude" step="0.0001" value="11.2558">
+          </div>
+          <div class="coord-label">End Point</div>
+          <div class="coord-input-group">
+            <input type="number" id="endLat" placeholder="Latitude" step="0.0001" value="43.7350">
+            <input type="number" id="endLng" placeholder="Longitude" step="0.0001" value="11.2890">
+          </div>
+        </div>
+
+        <div class="markers-legend">
+          <div class="marker-item">
+            <div class="marker-dot start"></div>
+            <span>Start location</span>
+          </div>
+          <div class="marker-item">
+            <div class="marker-dot end"></div>
+            <span>End location</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="control-section">
+        <h3>Algorithm</h3>
+        <div class="control-group">
+          <label>Animation Algorithm</label>
+          <select id="algorithm" onchange="onAlgorithmChange()">
+            <option value="vanwijk" selected>van Wijk/Nuij (your useFlyover)</option>
+            <option value="simple">Simple Linear Interpolation</option>
+          </select>
+        </div>
+
+        <div class="algorithm-info" id="algorithmInfo">
+          <strong>van Wijk/Nuij:</strong> "Smooth and efficient zooming and panning" algorithm.
+          Calculates optimal camera path through 3D space. Used by @math.gl/web-mercator.
+          <br><a href="https://www.win.tue.nl/~vanwijk/zoompan.pdf" target="_blank">Read the paper →</a>
+        </div>
+
+        <div class="vanwijk-params" id="vanwijkParams">
+          <div class="control-group">
+            <label>Curve (ρ parameter)</label>
+            <input type="range" id="curve" min="0.1" max="2.0" value="0.85" step="0.05" oninput="updateCurveDisplay()">
+            <div class="value-display" id="curveValue">0.85 (your default)</div>
+          </div>
+          <div class="algorithm-info">
+            Lower values = more zoom out during flight.<br>
+            Higher values = flatter, more direct path.<br>
+            Your code uses <code>curve: 0.85</code>
+          </div>
+        </div>
+      </div>
+
+      <div class="control-section">
+        <h3>Duration</h3>
+
+        <div class="checkbox-group">
+          <input type="checkbox" id="autoDuration" checked onchange="onAutoDurationChange()">
+          <label for="autoDuration">Auto-calculate duration (like your code)</label>
+        </div>
+
+        <div class="control-group" id="manualDurationGroup" style="display: none;">
+          <label>Manual Duration</label>
+          <input type="range" id="duration" min="500" max="15000" value="2000" step="100" oninput="updateDurationDisplay()">
+          <div class="value-display" id="durationValue">2000ms</div>
+        </div>
+
+        <div class="duration-info" id="durationInfo">
+          Calculated duration: <strong id="calcDuration">--</strong>
+          <br><span id="durationExplanation"></span>
+        </div>
+      </div>
+
+      <div class="control-section">
+        <h3>Zoom Levels</h3>
+
+        <div class="control-group">
+          <label>Start Zoom</label>
+          <input type="range" id="startZoom" min="1" max="20" value="14" step="0.5" oninput="updateStartZoomDisplay()">
+          <div class="value-display" id="startZoomValue">14</div>
+        </div>
+
+        <div class="control-group">
+          <label>End Zoom</label>
+          <input type="range" id="endZoom" min="1" max="20" value="15" step="0.5" oninput="updateEndZoomDisplay()">
+          <div class="value-display" id="endZoomValue">15</div>
+        </div>
+      </div>
+
+      <div class="control-section">
+        <h3>Easing</h3>
+        <div class="control-group">
+          <label>Easing Function</label>
+          <select id="easing">
+            <option value="easeInOutQuad" selected>Ease In-Out Quad (your default)</option>
+            <option value="linear">Linear (constant speed)</option>
+            <option value="easeInQuad">Ease In Quad (accelerate)</option>
+            <option value="easeOutQuad">Ease Out Quad (decelerate)</option>
+            <option value="easeInOutCubic">Ease In-Out Cubic</option>
+            <option value="easeInOutExpo">Ease In-Out Expo (dramatic)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="control-section">
+        <div class="button-group">
+          <button class="btn btn-primary" id="animateBtn" onclick="startAnimation()" disabled>Animate</button>
+          <button class="btn btn-secondary" onclick="resetMap()">Reset</button>
+        </div>
+        <div class="button-group">
+          <button class="btn btn-secondary" onclick="swapLocations()">Swap Start/End</button>
+        </div>
+      </div>
+
+      <div class="control-section">
+        <div class="live-values">
+          <h3>Live Values</h3>
+          <div class="live-value-row">
+            <span class="label">Progress (t)</span>
+            <span class="value" id="liveProgress">0%</span>
+          </div>
+          <div class="live-value-row">
+            <span class="label">Eased (t′)</span>
+            <span class="value" id="liveEasedProgress">0%</span>
+          </div>
+          <div class="live-value-row">
+            <span class="label">Latitude</span>
+            <span class="value" id="liveLat">--</span>
+          </div>
+          <div class="live-value-row">
+            <span class="label">Longitude</span>
+            <span class="value" id="liveLng">--</span>
+          </div>
+          <div class="live-value-row">
+            <span class="label">Zoom</span>
+            <span class="value" id="liveZoom">--</span>
+          </div>
+          <div class="live-value-row">
+            <span class="label">Frame Rate</span>
+            <span class="value" id="liveFps">--</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-bar-fill" id="progressFill"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="map-container">
+      <div id="map">
+        <div class="map-placeholder">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+          </svg>
+          <p>Enter your Google Maps API key to load the map</p>
+        </div>
+      </div>
+      <div class="info-panel" id="infoPanel">
+        <strong>van Wijk/Nuij Algorithm</strong><br>
+        Uses <code>moveCamera()</code> each frame with interpolated values.
+        The algorithm calculates an optimal 3D camera path that zooms out
+        proportionally to travel distance.
+      </div>
+      <div class="info-panel" style="bottom: 120px; background: #e8f5e9; border-left: 3px solid #4caf50;">
+        <strong>Vector Maps Recommended</strong><br>
+        Add a Map ID (from Cloud Console) to use vector maps.
+        Vector maps use WebGL and handle animations smoothly.
+        Without it, raster tiles can't keep up with rapid viewport changes.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ============================================
+    // PRESETS
+    // ============================================
+    const presets = {
+      florence: {
+        start: { lat: 43.7696, lng: 11.2558 },
+        end: { lat: 43.7350, lng: 11.2890 },
+        defaultStartZoom: 14,
+        defaultEndZoom: 15
+      },
+      'florence-reverse': {
+        start: { lat: 43.7350, lng: 11.2890 },
+        end: { lat: 43.7696, lng: 11.2558 },
+        defaultStartZoom: 15,
+        defaultEndZoom: 14
+      },
+      'london-paris': {
+        start: { lat: 51.5074, lng: -0.1278 },
+        end: { lat: 48.8566, lng: 2.3522 },
+        defaultStartZoom: 12,
+        defaultEndZoom: 12
+      },
+      'sf-nyc': {
+        start: { lat: 37.7749, lng: -122.4194 },
+        end: { lat: 40.7128, lng: -74.0060 },
+        defaultStartZoom: 12,
+        defaultEndZoom: 12
+      },
+      'sf-tokyo': {
+        start: { lat: 37.7749, lng: -122.4194 },
+        end: { lat: 35.6762, lng: 139.6503 },
+        defaultStartZoom: 11,
+        defaultEndZoom: 11
+      },
+      'tokyo-sydney': {
+        start: { lat: 35.6762, lng: 139.6503 },
+        end: { lat: -33.8688, lng: 151.2093 },
+        defaultStartZoom: 11,
+        defaultEndZoom: 11
+      },
+      'zoom-only': {
+        start: { lat: 43.7696, lng: 11.2558 },
+        end: { lat: 43.7696, lng: 11.2558 },
+        defaultStartZoom: 10,
+        defaultEndZoom: 16
+      },
+      custom: {
+        start: { lat: 43.7696, lng: 11.2558 },
+        end: { lat: 43.7350, lng: 11.2890 },
+        defaultStartZoom: 14,
+        defaultEndZoom: 15
+      }
+    };
+
+    // ============================================
+    // EASING FUNCTIONS
+    // ============================================
+    const easingFunctions = {
+      linear: t => t,
+      easeInQuad: t => t * t,
+      easeOutQuad: t => t * (2 - t),
+      // This matches your useFlyover easeInOutQuad exactly
+      easeInOutQuad: t => {
+        if (t < 0.5) return t * t * 2;
+        return -1 + (2 - t) * t * 2;
+      },
+      easeInOutCubic: t => t < 0.5 ? 4 * t * t * t : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1,
+      easeInOutExpo: t => {
+        if (t === 0) return 0;
+        if (t === 1) return 1;
+        if (t < 0.5) return Math.pow(2, 20 * t - 10) / 2;
+        return (2 - Math.pow(2, -20 * t + 10)) / 2;
+      }
+    };
+
+    // ============================================
+    // VAN WIJK/NUIJ ALGORITHM
+    // Implementation matching @math.gl/web-mercator
+    // Paper: https://www.win.tue.nl/~vanwijk/zoompan.pdf
+    // ============================================
+
+    const EARTH_CIRCUMFERENCE = 40075016.686; // meters
+    const SAME_LOCATION_EPSILON = 0.0001; // ~11 meters
+
+    // Convert zoom level to scale (meters per pixel at equator)
+    function zoomToScale(zoom) {
+      return EARTH_CIRCUMFERENCE / (512 * Math.pow(2, zoom));
+    }
+
+    // Convert scale to zoom level
+    function scaleToZoom(scale) {
+      return Math.log2(EARTH_CIRCUMFERENCE / (512 * scale));
+    }
+
+    // Check if this is a zoom-only change (your fix for the algorithm degeneration)
+    function isNearlyZoomOnlyChange(startLat, startLng, endLat, endLng) {
+      return Math.abs(startLat - endLat) < SAME_LOCATION_EPSILON &&
+             Math.abs(startLng - endLng) < SAME_LOCATION_EPSILON;
+    }
+
+    // Normalize longitude for cross-Pacific flights (from your normalizeCenter)
+    function normalizeLongitude(endLng, startLng) {
+      let result = endLng;
+      const delta = result - startLng;
+      if (delta > 180) {
+        result -= 360;
+      } else if (delta < -180) {
+        result += 360;
+      }
+      return result;
+    }
+
+    /**
+     * van Wijk/Nuij flyToViewport implementation
+     * Based on @math.gl/web-mercator's flyToViewport function
+     * Paper: https://www.win.tue.nl/~vanwijk/zoompan.pdf
+     */
+    function flyToViewport(startProps, endProps, t, options = {}) {
+      const { curve = 0.85 } = options;
+      const rho = curve;
+      const rho2 = rho * rho;
+      const rho4 = rho2 * rho2;
+
+      const { width, height, longitude: startLng, latitude: startLat, zoom: startZoom } = startProps;
+      const { longitude: endLng, latitude: endLat, zoom: endZoom } = endProps;
+
+      const scale0 = zoomToScale(startZoom);
+      const scale1 = zoomToScale(endZoom);
+
+      // w0, w1: "world size" at start and end (viewport height in world coords)
+      const w0 = Math.max(width, height) * scale0;
+      const w1 = Math.max(width, height) * scale1;
+
+      // Calculate pixel distance at a reference scale
+      const dx = (endLng - startLng) * (EARTH_CIRCUMFERENCE / 360);
+      const latCos = Math.cos((startLat + endLat) * Math.PI / 360);
+      const dy = (endLat - startLat) * (EARTH_CIRCUMFERENCE / 360) * latCos;
+      const u1 = Math.sqrt(dx * dx + dy * dy);
+
+      // If distance is very small, use linear interpolation
+      if (u1 < 1) {
+        return {
+          longitude: startLng + (endLng - startLng) * t,
+          latitude: startLat + (endLat - startLat) * t,
+          zoom: startZoom + (endZoom - startZoom) * t
+        };
+      }
+
+      // Special parameter from the paper (equation 9)
+      const b0 = (w1 * w1 - w0 * w0 + rho4 * u1 * u1) / (2 * w0 * rho2 * u1);
+      const b1 = (w1 * w1 - w0 * w0 - rho4 * u1 * u1) / (2 * w1 * rho2 * u1);
+
+      // r function from the paper
+      const r0 = Math.log(Math.sqrt(b0 * b0 + 1) - b0);
+      const r1 = Math.log(Math.sqrt(b1 * b1 + 1) - b1);
+
+      // S: total path length
+      const S = (r1 - r0) / rho;
+
+      // Handle degenerate cases
+      if (!Number.isFinite(S) || Math.abs(S) < 0.001) {
+        return {
+          longitude: startLng + (endLng - startLng) * t,
+          latitude: startLat + (endLat - startLat) * t,
+          zoom: startZoom + (endZoom - startZoom) * t
+        };
+      }
+
+      const s = t * S;
+      const coshr0 = Math.cosh(r0);
+      const w = w0 * coshr0 / Math.cosh(rho * s + r0);
+
+      // u(s) from the paper - position along the ground path
+      const u = w0 * (coshr0 * Math.tanh(rho * s + r0) - Math.sinh(r0)) / rho2;
+
+      // Normalize u to [0, 1] for interpolation
+      // At s=0: u=0, at s=S: u=u1
+      const k = Math.min(1, Math.max(0, u / u1));
+
+      const longitude = startLng + (endLng - startLng) * k;
+      const latitude = startLat + (endLat - startLat) * k;
+      const zoom = scaleToZoom(w / Math.max(width, height));
+
+      return { longitude, latitude, zoom };
+    }
+
+    /**
+     * Your flyToViewportWithSameZoomFix wrapper
+     */
+    function flyToViewportWithSameZoomFix(startProps, endProps, t, options) {
+      if (isNearlyZoomOnlyChange(startProps.latitude, startProps.longitude, endProps.latitude, endProps.longitude)) {
+        // For zoom-only changes, use linear interpolation
+        return {
+          longitude: startProps.longitude + (endProps.longitude - startProps.longitude) * t,
+          latitude: startProps.latitude + (endProps.latitude - startProps.latitude) * t,
+          zoom: startProps.zoom + (endProps.zoom - startProps.zoom) * t
+        };
+      }
+      return flyToViewport(startProps, endProps, t, options);
+    }
+
+    /**
+     * Calculate duration using van Wijk/Nuij path length
+     * This matches @math.gl/web-mercator's getFlyToDuration
+     */
+    function getFlyToDuration(startProps, endProps, options = {}) {
+      const { curve = 0.85, maxDuration = 15000 } = options;
+      const rho = curve;
+      const rho2 = rho * rho;
+      const rho4 = rho2 * rho2;
+
+      const { width, height, longitude: startLng, latitude: startLat, zoom: startZoom } = startProps;
+      const { longitude: endLng, latitude: endLat, zoom: endZoom } = endProps;
+
+      const scale0 = zoomToScale(startZoom);
+      const scale1 = zoomToScale(endZoom);
+      const w0 = Math.max(width, height) * scale0;
+      const w1 = Math.max(width, height) * scale1;
+
+      // Calculate distance in meters
+      const dx = (endLng - startLng) * (EARTH_CIRCUMFERENCE / 360);
+      const latCos = Math.cos((startLat + endLat) * Math.PI / 360);
+      const dy = (endLat - startLat) * (EARTH_CIRCUMFERENCE / 360) * latCos;
+      const u1 = Math.sqrt(dx * dx + dy * dy);
+
+      if (u1 < 1) {
+        // Zoom-only: simple duration based on zoom change
+        const zoomDelta = Math.abs(endZoom - startZoom);
+        return Math.min(maxDuration, zoomDelta * 300);
+      }
+
+      const b0 = (w1 * w1 - w0 * w0 + rho4 * u1 * u1) / (2 * w0 * rho2 * u1);
+      const b1 = (w1 * w1 - w0 * w0 - rho4 * u1 * u1) / (2 * w1 * rho2 * u1);
+      const r0 = Math.log(Math.sqrt(b0 * b0 + 1) - b0);
+      const r1 = Math.log(Math.sqrt(b1 * b1 + 1) - b1);
+      const S = (r1 - r0) / rho;
+
+      if (!Number.isFinite(S) || S <= 0) {
+        return 1000; // fallback
+      }
+
+      // Duration is proportional to path length S
+      // Using a speed factor to convert to milliseconds
+      const speed = 1.2; // baseline speed factor
+      let duration = 1000 * S / speed;
+
+      return Math.min(maxDuration, Math.max(500, duration));
+    }
+
+    /**
+     * Your getFlyToDurationWithSameZoomFix wrapper
+     */
+    function getFlyToDurationWithSameZoomFix(startProps, endProps, options) {
+      const MS_PER_ZOOM_LEVEL = 300;
+
+      if (isNearlyZoomOnlyChange(startProps.latitude, startProps.longitude, endProps.latitude, endProps.longitude)) {
+        const zoomDelta = Math.abs(endProps.zoom - startProps.zoom);
+        const duration = zoomDelta * MS_PER_ZOOM_LEVEL;
+        if (options?.maxDuration != null && duration > options.maxDuration) {
+          return options.maxDuration;
+        }
+        return duration;
+      }
+      return getFlyToDuration(startProps, endProps, options);
+    }
+
+    // ============================================
+    // SIMPLE LINEAR INTERPOLATION ALGORITHM
+    // ============================================
+    function simpleInterpolate(startProps, endProps, t) {
+      return {
+        longitude: startProps.longitude + (endProps.longitude - startProps.longitude) * t,
+        latitude: startProps.latitude + (endProps.latitude - startProps.latitude) * t,
+        zoom: startProps.zoom + (endProps.zoom - startProps.zoom) * t
+      };
+    }
+
+    // ============================================
+    // STATE
+    // ============================================
+    let map = null;
+    let startMarker = null;
+    let endMarker = null;
+    let animationId = null;
+    let isAnimating = false;
+    let frameCount = 0;
+    let fpsUpdateTime = 0;
+
+    // ============================================
+    // MAP LOADING
+    // ============================================
+    function loadMap() {
+      const apiKey = document.getElementById('apiKey').value.trim();
+      if (!apiKey) {
+        alert('Please enter a valid API key');
+        return;
+      }
+
+      const existingScript = document.getElementById('googleMapsScript');
+      if (existingScript) {
+        existingScript.remove();
+      }
+
+      const mapDiv = document.getElementById('map');
+      mapDiv.innerHTML = '';
+
+      const script = document.createElement('script');
+      script.id = 'googleMapsScript';
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&callback=initMap`;
+      script.async = true;
+      script.defer = true;
+      document.head.appendChild(script);
+    }
+
+    function initMap() {
+      const preset = presets[document.getElementById('presetSelect').value];
+      const mapId = document.getElementById('mapId').value.trim();
+
+      const mapOptions = {
+        center: preset.start,
+        zoom: parseFloat(document.getElementById('startZoom').value),
+        mapTypeControl: true,
+        streetViewControl: false,
+        fullscreenControl: true,
+        gestureHandling: 'greedy'
+      };
+
+      // Add Map ID for vector maps if provided
+      if (mapId) {
+        mapOptions.mapId = mapId;
+      }
+
+      map = new google.maps.Map(document.getElementById('map'), mapOptions);
+
+      // Log whether we're using vector or raster
+      console.log(mapId ? 'Using vector map with Map ID: ' + mapId : 'Using raster map (no Map ID)');
+
+      updateMarkers();
+      document.getElementById('animateBtn').disabled = false;
+      updateCalculatedDuration();
+      updateLiveValues(0, 0, preset.start.lat, preset.start.lng, parseFloat(document.getElementById('startZoom').value));
+    }
+
+    function updateMarkers() {
+      const preset = getCurrentPreset();
+
+      if (startMarker) startMarker.setMap(null);
+      if (endMarker) endMarker.setMap(null);
+
+      if (!map) return;
+
+      startMarker = new google.maps.Marker({
+        position: preset.start,
+        map: map,
+        title: 'Start',
+        icon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          scale: 10,
+          fillColor: '#34a853',
+          fillOpacity: 1,
+          strokeColor: '#ffffff',
+          strokeWeight: 2
+        }
+      });
+
+      endMarker = new google.maps.Marker({
+        position: preset.end,
+        map: map,
+        title: 'End',
+        icon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          scale: 10,
+          fillColor: '#ea4335',
+          fillOpacity: 1,
+          strokeColor: '#ffffff',
+          strokeWeight: 2
+        }
+      });
+    }
+
+    // ============================================
+    // ANIMATION ENGINE
+    // ============================================
+    function startAnimation() {
+      if (!map || isAnimating) return;
+
+      const preset = getCurrentPreset();
+      const algorithm = document.getElementById('algorithm').value;
+      const autoDuration = document.getElementById('autoDuration').checked;
+      const easingName = document.getElementById('easing').value;
+      const startZoom = parseFloat(document.getElementById('startZoom').value);
+      const endZoom = parseFloat(document.getElementById('endZoom').value);
+      const curve = parseFloat(document.getElementById('curve').value);
+
+      // Get map dimensions
+      const mapDiv = document.getElementById('map');
+      const width = mapDiv.clientWidth;
+      const height = mapDiv.clientHeight;
+
+      // Normalize longitude for cross-Pacific flights
+      const normalizedEndLng = normalizeLongitude(preset.end.lng, preset.start.lng);
+
+      const startProps = {
+        width,
+        height,
+        longitude: preset.start.lng,
+        latitude: preset.start.lat,
+        zoom: startZoom
+      };
+
+      const endProps = {
+        longitude: normalizedEndLng,
+        latitude: preset.end.lat,
+        zoom: endZoom
+      };
+
+      const config = { curve, maxDuration: 15000 };
+
+      // Calculate duration
+      let duration;
+      if (autoDuration && algorithm === 'vanwijk') {
+        duration = getFlyToDurationWithSameZoomFix(startProps, endProps, config);
+
+        // Your duration compression: limit growth above 2000ms
+        if (duration > 2000) {
+          duration = 2000 + duration / 10;
+        }
+      } else if (autoDuration && algorithm === 'simple') {
+        // Simple algorithm: duration based on distance
+        const dist = Math.sqrt(
+          Math.pow(endProps.latitude - startProps.latitude, 2) +
+          Math.pow(endProps.longitude - startProps.longitude, 2)
+        );
+        duration = Math.min(15000, Math.max(1000, dist * 200));
+      } else {
+        duration = parseInt(document.getElementById('duration').value);
+      }
+
+      // Reset to start position
+      map.moveCamera({
+        center: { lat: startProps.latitude, lng: startProps.longitude },
+        zoom: startProps.zoom
+      });
+
+      isAnimating = true;
+      document.getElementById('animateBtn').disabled = true;
+      frameCount = 0;
+      fpsUpdateTime = performance.now();
+
+      const startTime = performance.now();
+
+      function animate(currentTime) {
+        const elapsed = currentTime - startTime;
+        const rawProgress = Math.min(elapsed / duration, 1);
+        const easedProgress = easingFunctions[easingName](rawProgress);
+
+        let result;
+        if (algorithm === 'vanwijk') {
+          result = flyToViewportWithSameZoomFix(startProps, endProps, easedProgress, config);
+        } else {
+          result = simpleInterpolate(startProps, endProps, easedProgress);
+        }
+
+        // Apply to map using moveCamera (like your code)
+        map.moveCamera({
+          center: { lat: result.latitude, lng: result.longitude },
+          zoom: result.zoom
+        });
+
+        // Calculate FPS
+        frameCount++;
+        if (currentTime - fpsUpdateTime >= 500) {
+          const fps = Math.round(frameCount / ((currentTime - fpsUpdateTime) / 1000));
+          document.getElementById('liveFps').textContent = fps + ' fps';
+          frameCount = 0;
+          fpsUpdateTime = currentTime;
+        }
+
+        updateLiveValues(rawProgress, easedProgress, result.latitude, result.longitude, result.zoom);
+
+        if (rawProgress < 1) {
+          animationId = requestAnimationFrame(animate);
+        } else {
+          isAnimating = false;
+          document.getElementById('animateBtn').disabled = false;
+        }
+      }
+
+      animationId = requestAnimationFrame(animate);
+    }
+
+    function updateLiveValues(progress, easedProgress, lat, lng, zoom) {
+      document.getElementById('liveProgress').textContent = (progress * 100).toFixed(1) + '%';
+      document.getElementById('liveEasedProgress').textContent = (easedProgress * 100).toFixed(1) + '%';
+      document.getElementById('liveLat').textContent = lat.toFixed(6);
+      document.getElementById('liveLng').textContent = lng.toFixed(6);
+      document.getElementById('liveZoom').textContent = zoom.toFixed(2);
+      document.getElementById('progressFill').style.width = (progress * 100) + '%';
+    }
+
+    function resetMap() {
+      if (animationId) {
+        cancelAnimationFrame(animationId);
+        animationId = null;
+      }
+      isAnimating = false;
+      document.getElementById('animateBtn').disabled = false;
+
+      if (!map) return;
+
+      const preset = getCurrentPreset();
+      const startZoom = parseFloat(document.getElementById('startZoom').value);
+
+      map.moveCamera({
+        center: preset.start,
+        zoom: startZoom
+      });
+
+      updateLiveValues(0, 0, preset.start.lat, preset.start.lng, startZoom);
+    }
+
+    // ============================================
+    // UI HANDLERS
+    // ============================================
+    function getCurrentPreset() {
+      const presetName = document.getElementById('presetSelect').value;
+
+      if (presetName === 'custom') {
+        return {
+          start: {
+            lat: parseFloat(document.getElementById('startLat').value) || 0,
+            lng: parseFloat(document.getElementById('startLng').value) || 0
+          },
+          end: {
+            lat: parseFloat(document.getElementById('endLat').value) || 0,
+            lng: parseFloat(document.getElementById('endLng').value) || 0
+          }
+        };
+      }
+
+      return presets[presetName];
+    }
+
+    function onPresetChange() {
+      const presetName = document.getElementById('presetSelect').value;
+      const customCoords = document.getElementById('customCoords');
+
+      if (presetName === 'custom') {
+        customCoords.classList.add('visible');
+      } else {
+        customCoords.classList.remove('visible');
+
+        const preset = presets[presetName];
+        document.getElementById('startZoom').value = preset.defaultStartZoom;
+        document.getElementById('endZoom').value = preset.defaultEndZoom;
+        updateStartZoomDisplay();
+        updateEndZoomDisplay();
+      }
+
+      updateMarkers();
+      resetMap();
+      updateCalculatedDuration();
+    }
+
+    function onAlgorithmChange() {
+      const algorithm = document.getElementById('algorithm').value;
+      const vanwijkParams = document.getElementById('vanwijkParams');
+      const algorithmInfo = document.getElementById('algorithmInfo');
+      const infoPanel = document.getElementById('infoPanel');
+
+      if (algorithm === 'vanwijk') {
+        vanwijkParams.classList.remove('hidden');
+        algorithmInfo.innerHTML = `
+          <strong>van Wijk/Nuij:</strong> "Smooth and efficient zooming and panning" algorithm.
+          Calculates optimal camera path through 3D space. Used by @math.gl/web-mercator.
+          <br><a href="https://www.win.tue.nl/~vanwijk/zoompan.pdf" target="_blank">Read the paper →</a>
+        `;
+        infoPanel.innerHTML = `
+          <strong>van Wijk/Nuij Algorithm</strong><br>
+          Uses <code>moveCamera()</code> each frame with interpolated values.
+          The algorithm calculates an optimal 3D camera path that zooms out
+          proportionally to travel distance.
+        `;
+      } else {
+        vanwijkParams.classList.add('hidden');
+        algorithmInfo.innerHTML = `
+          <strong>Simple Linear:</strong> Direct interpolation of lat, lng, and zoom.
+          No intelligent zoom behavior - just linear movement from A to B.
+          Good baseline for comparison.
+        `;
+        infoPanel.innerHTML = `
+          <strong>Simple Linear Interpolation</strong><br>
+          Direct lerp of latitude, longitude, and zoom.
+          No zoom-out behavior during travel.
+        `;
+      }
+
+      updateCalculatedDuration();
+    }
+
+    function onAutoDurationChange() {
+      const autoDuration = document.getElementById('autoDuration').checked;
+      const manualGroup = document.getElementById('manualDurationGroup');
+      const durationInfo = document.getElementById('durationInfo');
+
+      if (autoDuration) {
+        manualGroup.style.display = 'none';
+        durationInfo.style.display = 'block';
+      } else {
+        manualGroup.style.display = 'block';
+        durationInfo.style.display = 'none';
+      }
+
+      updateCalculatedDuration();
+    }
+
+    function updateCalculatedDuration() {
+      if (!document.getElementById('autoDuration').checked) return;
+
+      const preset = getCurrentPreset();
+      const algorithm = document.getElementById('algorithm').value;
+      const startZoom = parseFloat(document.getElementById('startZoom').value);
+      const endZoom = parseFloat(document.getElementById('endZoom').value);
+      const curve = parseFloat(document.getElementById('curve').value);
+
+      const mapDiv = document.getElementById('map');
+      const width = mapDiv?.clientWidth || 800;
+      const height = mapDiv?.clientHeight || 600;
+
+      const normalizedEndLng = normalizeLongitude(preset.end.lng, preset.start.lng);
+
+      const startProps = {
+        width,
+        height,
+        longitude: preset.start.lng,
+        latitude: preset.start.lat,
+        zoom: startZoom
+      };
+
+      const endProps = {
+        longitude: normalizedEndLng,
+        latitude: preset.end.lat,
+        zoom: endZoom
+      };
+
+      let duration;
+      let explanation;
+
+      if (algorithm === 'vanwijk') {
+        const rawDuration = getFlyToDurationWithSameZoomFix(startProps, endProps, { curve, maxDuration: 15000 });
+
+        if (rawDuration > 2000) {
+          duration = 2000 + rawDuration / 10;
+          explanation = `Raw: ${Math.round(rawDuration)}ms → Compressed: 2000 + ${Math.round(rawDuration)}/10`;
+        } else {
+          duration = rawDuration;
+          explanation = `From van Wijk/Nuij path length (no compression needed)`;
+        }
+      } else {
+        const dist = Math.sqrt(
+          Math.pow(endProps.latitude - startProps.latitude, 2) +
+          Math.pow(endProps.longitude - startProps.longitude, 2)
+        );
+        duration = Math.min(15000, Math.max(1000, dist * 200));
+        explanation = `Based on coordinate distance: ${dist.toFixed(4)}°`;
+      }
+
+      document.getElementById('calcDuration').textContent = Math.round(duration) + 'ms';
+      document.getElementById('durationExplanation').textContent = explanation;
+    }
+
+    function swapLocations() {
+      const presetName = document.getElementById('presetSelect').value;
+
+      if (presetName === 'custom') {
+        const startLat = document.getElementById('startLat').value;
+        const startLng = document.getElementById('startLng').value;
+        const endLat = document.getElementById('endLat').value;
+        const endLng = document.getElementById('endLng').value;
+
+        document.getElementById('startLat').value = endLat;
+        document.getElementById('startLng').value = endLng;
+        document.getElementById('endLat').value = startLat;
+        document.getElementById('endLng').value = startLng;
+      } else {
+        if (presetName === 'florence') {
+          document.getElementById('presetSelect').value = 'florence-reverse';
+        } else if (presetName === 'florence-reverse') {
+          document.getElementById('presetSelect').value = 'florence';
+        } else {
+          const preset = presets[presetName];
+          const temp = { ...preset.start };
+          preset.start = { ...preset.end };
+          preset.end = temp;
+        }
+      }
+
+      const startZoom = document.getElementById('startZoom').value;
+      const endZoom = document.getElementById('endZoom').value;
+      document.getElementById('startZoom').value = endZoom;
+      document.getElementById('endZoom').value = startZoom;
+      updateStartZoomDisplay();
+      updateEndZoomDisplay();
+
+      updateMarkers();
+      resetMap();
+      updateCalculatedDuration();
+    }
+
+    function updateDurationDisplay() {
+      document.getElementById('durationValue').textContent = document.getElementById('duration').value + 'ms';
+    }
+
+    function updateStartZoomDisplay() {
+      document.getElementById('startZoomValue').textContent = document.getElementById('startZoom').value;
+      updateCalculatedDuration();
+    }
+
+    function updateEndZoomDisplay() {
+      document.getElementById('endZoomValue').textContent = document.getElementById('endZoom').value;
+      updateCalculatedDuration();
+    }
+
+    function updateCurveDisplay() {
+      const curve = document.getElementById('curve').value;
+      let label = curve;
+      if (Math.abs(curve - 0.85) < 0.01) {
+        label += ' (your default)';
+      } else if (curve < 0.5) {
+        label += ' (more zoom out)';
+      } else if (curve > 1.5) {
+        label += ' (flatter path)';
+      }
+      document.getElementById('curveValue').textContent = label;
+      updateCalculatedDuration();
+    }
+
+    // Initialize
+    onAlgorithmChange();
+    onAutoDurationChange();
+
+    // Auto-load map if API key is present
+    window.addEventListener('DOMContentLoaded', () => {
+      if (document.getElementById('apiKey').value) {
+        loadMap();
+      }
+    });
+  </script>
+</body>
+</html>
