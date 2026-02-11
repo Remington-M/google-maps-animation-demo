@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Google Maps Animation Demo</title>
+  <script src="config.local.js" onerror="window.LOCAL_CONFIG = null;"></script>
   <style>
     * {
       box-sizing: border-box;
@@ -1356,8 +1357,19 @@
     onAlgorithmChange();
     onAutoDurationChange();
 
-    // Auto-load map if API key is present
+    // Load config and auto-load map
     window.addEventListener('DOMContentLoaded', () => {
+      // Load from local config if available
+      if (window.LOCAL_CONFIG) {
+        if (LOCAL_CONFIG.apiKey) {
+          document.getElementById('apiKey').value = LOCAL_CONFIG.apiKey;
+        }
+        if (LOCAL_CONFIG.mapId) {
+          document.getElementById('mapId').value = LOCAL_CONFIG.mapId;
+        }
+      }
+
+      // Auto-load map if API key is present
       if (document.getElementById('apiKey').value) {
         loadMap();
       }
