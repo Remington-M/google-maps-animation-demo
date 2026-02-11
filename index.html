@@ -533,6 +533,27 @@
       </div>
 
       <div class="control-section">
+        <h3>Zoom Skip (Large Animations)</h3>
+        <div class="checkbox-group">
+          <input type="checkbox" id="enableZoomSkip" onchange="onZoomSkipChange()">
+          <label for="enableZoomSkip">Skip middle zoom levels</label>
+        </div>
+
+        <div id="zoomSkipParams" class="vanwijk-params hidden">
+          <div class="control-group">
+            <label>Max Animated Zoom Levels</label>
+            <input type="range" id="maxZoomLevels" min="2" max="10" value="5" step="1" oninput="updateMaxZoomDisplay()">
+            <div class="value-display" id="maxZoomValue">5 levels (animate first 5 out, last 5 in)</div>
+          </div>
+          <div class="algorithm-info">
+            Limits how far the camera zooms out during flight.<br>
+            Example: If algorithm wants to zoom out to level 3, but max is 5 levels from start (zoom 15):<br>
+            • Zoom clamps at 10, panning continues, then zooms back in
+          </div>
+        </div>
+      </div>
+
+      <div class="control-section">
         <h3>Easing</h3>
         <div class="control-group">
           <label>Easing Function</label>
@@ -579,6 +600,7 @@
           <div class="live-value-row">
             <span class="label">Zoom</span>
             <span class="value" id="liveZoom">--</span>
+            <span class="value" id="zoomClamped" style="color: #ff9800; font-size: 10px; display: none;">CLAMPED</span>
           </div>
           <div class="live-value-row">
             <span class="label">Frame Rate</span>
@@ -1067,6 +1089,19 @@
 
       const startTime = performance.now();
 
+      // Zoom skip configuration
+      const enableZoomSkip = document.getElementById('enableZoomSkip').checked;
+      const maxZoomLevels = parseInt(document.getElementById('maxZoomLevels').value);
+
+      // Calculate zoom skip parameters if enabled
+      let zoomFloor = 0;
+      if (enableZoomSkip) {
+        // The floor is the highest zoom we'll allow during the "zoomed out" portion
+        // This limits how far we zoom out from the start/end zoom levels
+        const higherZoom = Math.max(startZoom, endZoom);
+        zoomFloor = higherZoom - maxZoomLevels;
+      }
+
       function animate(currentTime) {
         const elapsed = currentTime - startTime;
         const rawProgress = Math.min(elapsed / duration, 1);
@@ -1078,6 +1113,16 @@
         } else {
           result = simpleInterpolate(startProps, endProps, easedProgress);
         }
+
+        // Apply zoom skip if enabled - clamp zoom to not go below the floor
+        let isClamped = false;
+        if (enableZoomSkip && result.zoom < zoomFloor) {
+          result.zoom = zoomFloor;
+          isClamped = true;
+        }
+
+        // Show/hide clamped indicator
+        document.getElementById('zoomClamped').style.display = isClamped ? 'inline' : 'none';
 
         // Apply to map using moveCamera (like your code)
         map.moveCamera({
@@ -1351,6 +1396,22 @@
       }
       document.getElementById('curveValue').textContent = label;
       updateCalculatedDuration();
+    }
+
+    function onZoomSkipChange() {
+      const enabled = document.getElementById('enableZoomSkip').checked;
+      const params = document.getElementById('zoomSkipParams');
+      if (enabled) {
+        params.classList.remove('hidden');
+      } else {
+        params.classList.add('hidden');
+      }
+    }
+
+    function updateMaxZoomDisplay() {
+      const value = document.getElementById('maxZoomLevels').value;
+      document.getElementById('maxZoomValue').textContent =
+        value + ' levels (animate first ' + value + ' out, last ' + value + ' in)';
     }
 
     // Initialize
