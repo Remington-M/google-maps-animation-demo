@@ -1,6 +1,65 @@
 # Changelog
 
-## Session: 2026-02-25
+## Session: 2026-02-25 (Part 2) — Trips UI
+
+### Overview
+Applied the animation prototype to the actual Airbnb Trips design from Figma. Rebuilt `index.html` from a dev tool into a near-final Trips experience with the map animations driving the interaction.
+
+### What Changed
+
+#### Full Trips UI (matching Figma `Motion-Work---2026`)
+- **Split-panel layout**: 420px left sidebar + Google Maps filling the right
+- **Browser chrome mockup** + Airbnb nav bar with logo, "Switch to hosting", avatar, hamburger menu
+- **Trips list view**: "Trips" title with count, trip cards (thumbnail, city name, date range, guest avatars)
+- **Trip detail view**: back button, "Your stay" card (image, dates, host, guests, Directions), day-by-day itinerary timeline
+- **Category filter bar** at bottom of map in detail view (Experiences, Restaurants, Shopping, Attractions, Transit)
+
+#### Trip Data
+- **5 upcoming**: Paris (June 5–13), San Francisco (Nov 12–16), Rio de Janeiro (Dec 27–Jan 3), Los Angeles (Apr 17), Colorado (Nov 22–29)
+- **4 past**: Tokyo (2025), Charleston (2024), Austin (2024), Queenstown (2023)
+- Each trip has coordinates, guest avatars, stay info, and itinerary items with photos
+
+#### Map Pins (AdvancedMarkerElement)
+- Custom HTML markers on the world map showing trip thumbnail images + city name/date labels
+- Past trips use muted, smaller pin style
+- Clicking a pin triggers the animation (same as clicking the card)
+- Pins hide during animation and reappear on return to overview
+
+#### Animation Integration
+- **Trip selection** → van Wijk/Nuij animation from US overview (zoom 3.5) to trip coords (zoom 18.5)
+- **Back button** → reverse animation from zoom 18.5 back to zoom 3.5 centered on US
+- Match cut with spring physics drives both forward and back transitions
+- Subtle black flash overlay on cut frame
+
+#### Collapsible Dev Panel
+- **Hidden by default** — toggled via "DEV" pill button in bottom-right corner
+- Slides in from the right (380px dark panel)
+- Contains all animation controls: algorithm, curve (ρ), easing, start/end zoom, match cut toggle, start/end zoom levels, spring stiffness
+- Live telemetry: lat/lng/zoom, progress %, phase indicator, FPS counter, progress bar
+- All parameters are read from the dev panel at animation time, so tuning is instant
+
+### Branch
+- `feature/trips-ui` — created from `main`
+
+### Figma References
+- Trips Tab: `182:48977` in `Motion-Work---2026`
+- Trips Detail Page: `182:49846` in `Motion-Work---2026`
+
+### Setup Notes
+- Configured Figma Desktop MCP server (HTTP `127.0.0.1:3845/mcp`) for this project
+- Used `get_screenshot` and `get_design_context` to extract layout/structure from Figma
+
+### Next Steps / Ideas
+- [ ] Tune animation defaults (stiffness, zoom levels) for each route distance
+- [ ] Add hover states that highlight corresponding map pin
+- [ ] Smooth view transition (crossfade) between trips list and detail panels
+- [ ] Test with vector Map ID for smoother tile rendering during animation
+- [ ] Add selected trip highlight on map (larger pin or glow)
+- [ ] Consider animating the left panel content transition (slide in/out)
+
+---
+
+## Session: 2026-02-25 (Part 1)
 
 ### Overview
 Overhauled the match cut animation to feel more like a real film cut, added spring tuning controls, and updated defaults for long-distance routes.
