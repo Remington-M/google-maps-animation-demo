@@ -521,35 +521,48 @@
 
         <div class="control-group">
           <label>Start Zoom</label>
-          <input type="range" id="startZoom" min="1" max="20" value="14" step="0.5" oninput="updateStartZoomDisplay()">
-          <div class="value-display" id="startZoomValue">14</div>
+          <input type="range" id="startZoom" min="1" max="20" value="3.5" step="0.5" oninput="updateStartZoomDisplay()">
+          <div class="value-display" id="startZoomValue">3.5</div>
         </div>
 
         <div class="control-group">
           <label>End Zoom</label>
-          <input type="range" id="endZoom" min="1" max="20" value="15" step="0.5" oninput="updateEndZoomDisplay()">
-          <div class="value-display" id="endZoomValue">15</div>
+          <input type="range" id="endZoom" min="1" max="20" value="18.5" step="0.5" oninput="updateEndZoomDisplay()">
+          <div class="value-display" id="endZoomValue">18.5</div>
         </div>
       </div>
 
       <div class="control-section">
-        <h3>Zoom Skip (Large Animations)</h3>
+        <h3>Match Cut (Skip Middle)</h3>
         <div class="checkbox-group">
-          <input type="checkbox" id="enableZoomSkip" onchange="onZoomSkipChange()">
-          <label for="enableZoomSkip">Skip middle zoom levels</label>
+          <input type="checkbox" id="enableMatchCut" onchange="onMatchCutChange()">
+          <label for="enableMatchCut">Enable match cut</label>
         </div>
 
-        <div id="zoomSkipParams" class="vanwijk-params hidden">
+        <div id="matchCutParams" class="vanwijk-params hidden">
           <div class="control-group">
-            <label>Max Animated Zoom Levels</label>
-            <input type="range" id="maxZoomLevels" min="2" max="10" value="5" step="1" oninput="updateMaxZoomDisplay()">
-            <div class="value-display" id="maxZoomValue">5 levels (animate first 5 out, last 5 in)</div>
+            <label>Start: Zoom Out Levels</label>
+            <input type="range" id="startZoomLevels" min="0.5" max="8" value="1" step="0.5" oninput="updateStartZoomLevelsDisplay()">
+            <div class="value-display" id="startZoomLevelsValue">1 levels (animate zooming out 1 levels, then cut)</div>
+          </div>
+          <div class="control-group">
+            <label>End: Zoom In Levels</label>
+            <input type="range" id="endZoomLevels" min="0.5" max="8" value="1.5" step="0.5" oninput="updateEndZoomLevelsDisplay()">
+            <div class="value-display" id="endZoomLevelsValue">1.5 levels (cut to 1.5 levels out, animate zoom in)</div>
           </div>
           <div class="algorithm-info">
-            Limits how far the camera zooms out during flight.<br>
-            Example: If algorithm wants to zoom out to level 3, but max is 5 levels from start (zoom 15):<br>
-            • Zoom clamps at 10, panning continues, then zooms back in
+            <strong>Match Cut Effect:</strong> Like a film transition.<br>
+            • Animate start: zoom out + position for N levels<br>
+            • Hard cut: skip middle (no animation)<br>
+            • Animate end: zoom in + position for M levels<br>
+            <span id="matchCutPreview" style="color: #1565c0; margin-top: 8px; display: block;"></span>
           </div>
+          <div class="control-group">
+            <label>Spring Stiffness</label>
+            <input type="range" id="springStiffness" min="10" max="400" value="30" step="10" oninput="updateSpringStiffnessDisplay()">
+            <div class="value-display" id="springStiffnessValue">30 (~2300ms)</div>
+          </div>
+          <div id="matchCutStatus" class="algorithm-info" style="margin-top: 8px; display: none;"></div>
         </div>
       </div>
 
@@ -600,7 +613,11 @@
           <div class="live-value-row">
             <span class="label">Zoom</span>
             <span class="value" id="liveZoom">--</span>
-            <span class="value" id="zoomClamped" style="color: #ff9800; font-size: 10px; display: none;">CLAMPED</span>
+            <span class="value" id="matchCutIndicator" style="color: #e91e63; font-size: 10px; display: none; font-weight: bold;">CUT!</span>
+          </div>
+          <div class="live-value-row">
+            <span class="label">Phase</span>
+            <span class="value" id="livePhase">--</span>
           </div>
           <div class="live-value-row">
             <span class="label">Frame Rate</span>
@@ -663,20 +680,20 @@
       'sf-nyc': {
         start: { lat: 37.7749, lng: -122.4194 },
         end: { lat: 40.7128, lng: -74.0060 },
-        defaultStartZoom: 12,
-        defaultEndZoom: 12
+        defaultStartZoom: 3.5,
+        defaultEndZoom: 18.5
       },
       'sf-tokyo': {
         start: { lat: 37.7749, lng: -122.4194 },
         end: { lat: 35.6762, lng: 139.6503 },
-        defaultStartZoom: 11,
-        defaultEndZoom: 11
+        defaultStartZoom: 3.5,
+        defaultEndZoom: 18.5
       },
       'tokyo-sydney': {
         start: { lat: 35.6762, lng: 139.6503 },
         end: { lat: -33.8688, lng: 151.2093 },
-        defaultStartZoom: 11,
-        defaultEndZoom: 11
+        defaultStartZoom: 3.5,
+        defaultEndZoom: 18.5
       },
       'zoom-only': {
         start: { lat: 43.7696, lng: 11.2558 },
@@ -916,6 +933,278 @@
     }
 
     // ============================================
+    // SPRING EASING
+    // Based on Airbnb's spring generator
+    // ============================================
+
+    function createSpring({ mass, stiffness, damping, velocity = 0 }) {
+      const w0 = Math.sqrt(stiffness / mass);
+      const zeta = damping / (2 * Math.sqrt(stiffness * mass));
+      const wd = zeta < 1 ? w0 * Math.sqrt(1 - zeta * zeta) : 0;
+      const b = zeta < 1 ? (zeta * w0 - velocity) / wd : -velocity + w0;
+
+      function solver(time) {
+        if (zeta < 1) {
+          return Math.exp(-time * zeta * w0) * (Math.cos(wd * time) + b * Math.sin(wd * time));
+        } else {
+          return (1 + b * time) * Math.exp(-time * w0);
+        }
+      }
+
+      function velocitySolver(time) {
+        if (zeta < 1) {
+          return (
+            -zeta * w0 * solver(time) +
+            Math.exp(-time * zeta * w0) * (-wd * Math.sin(wd * time) + b * wd * Math.cos(wd * time))
+          );
+        } else {
+          return -w0 * solver(time) + b * Math.exp(-time * w0);
+        }
+      }
+
+      // Calculate duration (when spring settles)
+      const precision = 1 / 120;
+      let time = 0;
+      const restThreshold = 0.0001;
+
+      while (time < 10) { // Max 10 seconds
+        let pos = solver(time);
+        let vel = velocitySolver(time);
+
+        if (Math.abs(pos) < restThreshold && Math.abs(vel) < restThreshold) {
+          break;
+        }
+        time += precision;
+      }
+
+      const duration = time * 1000; // Convert to milliseconds
+
+      // Find peak velocity time (for match cut)
+      let peakVelocityTime = 0;
+      let peakVelocity = 0;
+
+      for (let t = 0; t < time; t += precision) {
+        const vel = Math.abs(velocitySolver(t));
+        if (vel > peakVelocity) {
+          peakVelocity = vel;
+          peakVelocityTime = t;
+        }
+      }
+
+      const peakT = peakVelocityTime / time; // Normalized 0-1
+
+      return {
+        duration,
+        easing: (t) => 1 - solver(time * t),
+        peakT, // When peak velocity occurs (0-1)
+        peakVelocityTime: peakVelocityTime * 1000, // In ms
+        velocityAt: (t) => velocitySolver(time * t)
+      };
+    }
+
+    // Build a critically-damped spring from stiffness (damping ratio = 1)
+    function buildSpring(stiffness) {
+      const mass = 1;
+      const damping = 2 * Math.sqrt(mass * stiffness); // zeta = 1
+      return createSpring({ mass, stiffness, damping, velocity: 0 });
+    }
+
+    // ============================================
+    // MATCH CUT HELPERS
+    // Find t values where zoom reaches certain levels
+    // ============================================
+
+    /**
+     * Binary search to find the t value where zoom reaches a target level
+     * direction: 'out' = searching for zoom decreasing, 'in' = searching for zoom increasing
+     */
+    function findTForZoomLevel(startProps, endProps, targetZoom, algorithm, config, searchStart, searchEnd, minT) {
+      const tolerance = 0.001;
+      let low = searchStart;
+      let high = searchEnd;
+
+      // Use minT (actual zoom minimum) to determine search direction, not 0.5
+      const isZoomOutPhase = searchEnd <= minT;
+
+      for (let i = 0; i < 50; i++) { // Max 50 iterations
+        const mid = (low + high) / 2;
+        let result;
+
+        if (algorithm === 'vanwijk') {
+          result = flyToViewportWithSameZoomFix(startProps, endProps, mid, config);
+        } else {
+          result = simpleInterpolate(startProps, endProps, mid);
+        }
+
+        const diff = result.zoom - targetZoom;
+
+        if (Math.abs(diff) < tolerance) {
+          return mid;
+        }
+
+        if (isZoomOutPhase) {
+          // Looking for zoom-out point (zoom is decreasing)
+          if (result.zoom > targetZoom) {
+            low = mid; // Need to go further (zoom out more)
+          } else {
+            high = mid;
+          }
+        } else {
+          // Looking for zoom-in point (zoom is increasing)
+          if (result.zoom < targetZoom) {
+            low = mid; // Need to go further toward end
+          } else {
+            high = mid;
+          }
+        }
+      }
+
+      return (low + high) / 2;
+    }
+
+    /**
+     * Find the minimum zoom level reached during the animation
+     * and the t value where it occurs
+     */
+    function findMinZoom(startProps, endProps, algorithm, config) {
+      let minZoom = Math.min(startProps.zoom, endProps.zoom);
+      let minT = 0.5;
+
+      // Sample the animation to find the minimum zoom point
+      for (let t = 0; t <= 1; t += 0.01) {
+        let result;
+        if (algorithm === 'vanwijk') {
+          result = flyToViewportWithSameZoomFix(startProps, endProps, t, config);
+        } else {
+          result = simpleInterpolate(startProps, endProps, t);
+        }
+
+        if (result.zoom < minZoom) {
+          minZoom = result.zoom;
+          minT = t;
+        }
+      }
+
+      return { minZoom, minT };
+    }
+
+    /**
+     * Calculate match cut parameters
+     * Returns: { t1, t2, ... shouldSkip } where animation plays 0->t1, cuts to t2, plays t2->1
+     *
+     * Works for ANY zoom profile — not just "zoom out then zoom in" U-shapes.
+     * Measures absolute zoom change from each endpoint to find cut points.
+     */
+    function calculateMatchCutParams(startProps, endProps, startZoomLevels, endZoomLevels, algorithm, config) {
+      // Sample the zoom profile
+      const numSamples = 200;
+      const zoomProfile = [];
+      for (let i = 0; i <= numSamples; i++) {
+        const t = i / numSamples;
+        let result;
+        if (algorithm === 'vanwijk') {
+          result = flyToViewportWithSameZoomFix(startProps, endProps, t, config);
+        } else {
+          result = simpleInterpolate(startProps, endProps, t);
+        }
+        zoomProfile.push({ t, zoom: result.zoom });
+      }
+
+      // Find maximum zoom change from each endpoint (for status reporting)
+      let maxChangeFromStart = 0;
+      let maxChangeFromEnd = 0;
+      let minZoom = Infinity, minT = 0.5;
+      for (const s of zoomProfile) {
+        maxChangeFromStart = Math.max(maxChangeFromStart, Math.abs(s.zoom - startProps.zoom));
+        maxChangeFromEnd = Math.max(maxChangeFromEnd, Math.abs(s.zoom - endProps.zoom));
+        if (s.zoom < minZoom) { minZoom = s.zoom; minT = s.t; }
+      }
+
+      console.log('Match cut analysis:', {
+        startZoom: startProps.zoom,
+        endZoom: endProps.zoom,
+        minZoom: minZoom.toFixed(2),
+        maxChangeFromStart: maxChangeFromStart.toFixed(2),
+        maxChangeFromEnd: maxChangeFromEnd.toFixed(2),
+        requestedStart: startZoomLevels,
+        requestedEnd: endZoomLevels
+      });
+
+      // Find t1: first t where |zoom - startZoom| >= startZoomLevels
+      let t1 = null;
+      for (let i = 1; i < zoomProfile.length; i++) {
+        const change = Math.abs(zoomProfile[i].zoom - startProps.zoom);
+        if (change >= startZoomLevels) {
+          const prevChange = Math.abs(zoomProfile[i - 1].zoom - startProps.zoom);
+          const frac = (startZoomLevels - prevChange) / (change - prevChange);
+          t1 = zoomProfile[i - 1].t + frac * (zoomProfile[i].t - zoomProfile[i - 1].t);
+          break;
+        }
+      }
+
+      // Find t2: last t where |zoom - endZoom| >= endZoomLevels (search backwards)
+      let t2 = null;
+      for (let i = zoomProfile.length - 2; i >= 0; i--) {
+        const change = Math.abs(zoomProfile[i].zoom - endProps.zoom);
+        if (change >= endZoomLevels) {
+          const nextChange = Math.abs(zoomProfile[i + 1].zoom - endProps.zoom);
+          const frac = (endZoomLevels - nextChange) / (change - nextChange);
+          t2 = zoomProfile[i + 1].t + frac * (zoomProfile[i].t - zoomProfile[i + 1].t);
+          break;
+        }
+      }
+
+      if (t1 === null || t2 === null) {
+        console.log('Match cut skipped: can\'t reach requested zoom levels', {
+          t1, t2,
+          maxChangeFromStart: maxChangeFromStart.toFixed(2),
+          maxChangeFromEnd: maxChangeFromEnd.toFixed(2)
+        });
+        return { shouldSkip: true, maxChangeFromStart, maxChangeFromEnd };
+      }
+
+      // Ensure we're skipping something meaningful (at least 5% of animation)
+      const skipRatio = t2 - t1;
+      if (skipRatio < 0.05) {
+        console.log('Match cut skipped: nothing to cut', { t1, t2, skipRatio });
+        return { shouldSkip: true, maxChangeFromStart, maxChangeFromEnd };
+      }
+
+      // Get zoom at cut points
+      let startCutResult, endCutResult;
+      if (algorithm === 'vanwijk') {
+        startCutResult = flyToViewportWithSameZoomFix(startProps, endProps, t1, config);
+        endCutResult = flyToViewportWithSameZoomFix(startProps, endProps, t2, config);
+      } else {
+        startCutResult = simpleInterpolate(startProps, endProps, t1);
+        endCutResult = simpleInterpolate(startProps, endProps, t2);
+      }
+
+      console.log('Match cut active:', {
+        t1: t1.toFixed(3),
+        t2: t2.toFixed(3),
+        skipRatio: (skipRatio * 100).toFixed(0) + '%',
+        startCutZoom: startCutResult.zoom.toFixed(1),
+        endCutZoom: endCutResult.zoom.toFixed(1)
+      });
+
+      return {
+        t1,
+        t2,
+        startCutZoom: startCutResult.zoom,
+        endCutZoom: endCutResult.zoom,
+        minZoom,
+        minT,
+        skipRatio,
+        maxChangeFromStart,
+        maxChangeFromEnd,
+        actualStartLevels: startZoomLevels,
+        actualEndLevels: endZoomLevels,
+        shouldSkip: false
+      };
+    }
+
+    // ============================================
     // STATE
     // ============================================
     let map = null;
@@ -946,7 +1235,8 @@
 
       const script = document.createElement('script');
       script.id = 'googleMapsScript';
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&callback=initMap`;
+      // Use v=weekly for vector map support (WebGL rendering)
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&v=weekly&callback=initMap`;
       script.async = true;
       script.defer = true;
       document.head.appendChild(script);
@@ -972,8 +1262,29 @@
 
       map = new google.maps.Map(document.getElementById('map'), mapOptions);
 
-      // Log whether we're using vector or raster
-      console.log(mapId ? 'Using vector map with Map ID: ' + mapId : 'Using raster map (no Map ID)');
+      // Check rendering type and update UI
+      const checkRenderingType = () => {
+        const renderingType = map.getRenderingType?.() || 'UNKNOWN';
+        const isVector = renderingType === 'VECTOR';
+        console.log('Map rendering type:', renderingType, mapId ? '(Map ID: ' + mapId + ')' : '(no Map ID)');
+
+        // Update the info panel
+        const vectorPanel = document.querySelector('.info-panel[style*="bottom: 120px"]');
+        if (vectorPanel) {
+          if (isVector) {
+            vectorPanel.style.background = '#e8f5e9';
+            vectorPanel.style.borderLeft = '3px solid #4caf50';
+            vectorPanel.innerHTML = '<strong>Vector Map Active ✓</strong><br>WebGL rendering enabled for smooth animations.';
+          } else {
+            vectorPanel.style.background = '#fff3e0';
+            vectorPanel.style.borderLeft = '3px solid #ff9800';
+            vectorPanel.innerHTML = '<strong>Raster Map (Slower)</strong><br>Add a Vector Map ID from Cloud Console for smoother animations. Tiles may appear blurry during fast movement.';
+          }
+        }
+      };
+
+      // Check after map is idle (tiles loaded)
+      google.maps.event.addListenerOnce(map, 'idle', checkRenderingType);
 
       updateMarkers();
       document.getElementById('animateBtn').disabled = false;
@@ -1089,40 +1400,121 @@
 
       const startTime = performance.now();
 
-      // Zoom skip configuration
-      const enableZoomSkip = document.getElementById('enableZoomSkip').checked;
-      const maxZoomLevels = parseInt(document.getElementById('maxZoomLevels').value);
+      // Match cut configuration
+      const enableMatchCut = document.getElementById('enableMatchCut').checked;
+      const startZoomLevels = parseFloat(document.getElementById('startZoomLevels').value);
+      const endZoomLevels = parseFloat(document.getElementById('endZoomLevels').value);
 
-      // Calculate zoom skip parameters if enabled
-      let zoomFloor = 0;
-      if (enableZoomSkip) {
-        // The floor is the highest zoom we'll allow during the "zoomed out" portion
-        // This limits how far we zoom out from the start/end zoom levels
-        const higherZoom = Math.max(startZoom, endZoom);
-        zoomFloor = higherZoom - maxZoomLevels;
+      // Calculate match cut parameters if enabled
+      let matchCutParams = null;
+      let spring = null;
+
+      if (enableMatchCut) {
+        matchCutParams = calculateMatchCutParams(startProps, endProps, startZoomLevels, endZoomLevels, algorithm, config);
+
+        if (!matchCutParams.shouldSkip) {
+          // Use spring physics - cut happens at peak velocity
+          const stiffness = parseFloat(document.getElementById('springStiffness').value);
+          spring = buildSpring(stiffness);
+          console.log('Spring stiffness:', stiffness, 'duration:', spring.duration.toFixed(0) + 'ms, peak at:', (spring.peakT * 100).toFixed(1) + '%');
+        } else {
+          // Fall back to normal animation
+          matchCutParams = null;
+          console.log('Using normal animation (match cut not applicable for this distance)');
+        }
       }
+
+      let cutTriggered = false;
 
       function animate(currentTime) {
         const elapsed = currentTime - startTime;
-        const rawProgress = Math.min(elapsed / duration, 1);
-        const easedProgress = easingFunctions[easingName](rawProgress);
-
+        let rawProgress, easedProgress, algorithmT;
         let result;
-        if (algorithm === 'vanwijk') {
-          result = flyToViewportWithSameZoomFix(startProps, endProps, easedProgress, config);
+        let phase = 'normal';
+        let showCut = false;
+
+        if (enableMatchCut && matchCutParams && spring) {
+          // Spring-based animation with cut at peak velocity
+          const springDuration = spring.duration;
+          rawProgress = Math.min(elapsed / springDuration, 1);
+
+          // Get the spring's eased value for smooth motion
+          const springEased = spring.easing(rawProgress);
+
+          // Position and zoom are coupled: both use the same t value
+          // so the "outgoing shot" stays centered near origin and
+          // the "incoming shot" stays centered near destination.
+          // The matching zoom levels on both sides mask the position jump.
+
+          let t;
+          if (rawProgress < spring.peakT) {
+            // Phase 1: Before peak velocity - zoom out from start
+            phase = 'start';
+            const phase1Eased = spring.easing(rawProgress) / spring.easing(spring.peakT);
+            t = phase1Eased * matchCutParams.t1;
+          } else if (!cutTriggered) {
+            // Cut frame - at peak velocity (both position and zoom jump)
+            phase = 'cut';
+            showCut = true;
+            cutTriggered = true;
+            t = matchCutParams.t2;
+          } else {
+            // Phase 2: After peak velocity - zoom in to end
+            phase = 'end';
+
+            if (rawProgress >= 1) {
+              t = 1;
+            } else {
+              const peakEased = spring.easing(spring.peakT);
+              const currentEased = spring.easing(rawProgress);
+              const phase2Eased = (currentEased - peakEased) / (1 - peakEased);
+              t = matchCutParams.t2 + phase2Eased * (1 - matchCutParams.t2);
+            }
+          }
+
+          // Single interpolation: position and zoom move together
+          if (algorithm === 'vanwijk') {
+            result = flyToViewportWithSameZoomFix(startProps, endProps, t, config);
+          } else {
+            result = simpleInterpolate(startProps, endProps, t);
+          }
+
+          algorithmT = t; // For display
+          easedProgress = springEased;
         } else {
-          result = simpleInterpolate(startProps, endProps, easedProgress);
+          // Normal animation (no match cut)
+          rawProgress = Math.min(elapsed / duration, 1);
+          easedProgress = easingFunctions[easingName](rawProgress);
+          algorithmT = easedProgress;
+
+          // Calculate result for normal animation
+          if (algorithm === 'vanwijk') {
+            result = flyToViewportWithSameZoomFix(startProps, endProps, algorithmT, config);
+          } else {
+            result = simpleInterpolate(startProps, endProps, algorithmT);
+          }
         }
 
-        // Apply zoom skip if enabled - clamp zoom to not go below the floor
-        let isClamped = false;
-        if (enableZoomSkip && result.zoom < zoomFloor) {
-          result.zoom = zoomFloor;
-          isClamped = true;
-        }
+        // Show/hide cut indicator
+        document.getElementById('matchCutIndicator').style.display = showCut ? 'inline' : 'none';
 
-        // Show/hide clamped indicator
-        document.getElementById('zoomClamped').style.display = isClamped ? 'inline' : 'none';
+        // Update phase display
+        const phaseDisplay = document.getElementById('livePhase');
+        if (enableMatchCut) {
+          if (phase === 'start') {
+            phaseDisplay.textContent = '1: Zoom Out';
+            phaseDisplay.style.color = '#4285f4';
+          } else if (phase === 'cut') {
+            phaseDisplay.textContent = 'CUT!';
+            phaseDisplay.style.color = '#e91e63';
+          } else if (phase === 'end') {
+            phaseDisplay.textContent = '2: Zoom In';
+            phaseDisplay.style.color = '#34a853';
+          }
+        } else {
+          phaseDisplay.textContent = '--';
+          phaseDisplay.style.color = '#333';
+        }
 
         // Apply to map using moveCamera (like your code)
         map.moveCamera({
@@ -1146,6 +1538,8 @@
         } else {
           isAnimating = false;
           document.getElementById('animateBtn').disabled = false;
+          document.getElementById('livePhase').textContent = 'Done';
+          document.getElementById('matchCutIndicator').style.display = 'none';
         }
       }
 
@@ -1168,6 +1562,9 @@
       }
       isAnimating = false;
       document.getElementById('animateBtn').disabled = false;
+      document.getElementById('matchCutIndicator').style.display = 'none';
+      document.getElementById('livePhase').textContent = '--';
+      document.getElementById('livePhase').style.color = '#333';
 
       if (!map) return;
 
@@ -1223,6 +1620,7 @@
       updateMarkers();
       resetMap();
       updateCalculatedDuration();
+      updateMatchCutStatus();
     }
 
     function onAlgorithmChange() {
@@ -1259,6 +1657,7 @@
       }
 
       updateCalculatedDuration();
+      updateMatchCutStatus();
     }
 
     function onAutoDurationChange() {
@@ -1368,6 +1767,7 @@
       updateMarkers();
       resetMap();
       updateCalculatedDuration();
+      updateMatchCutStatus();
     }
 
     function updateDurationDisplay() {
@@ -1377,11 +1777,13 @@
     function updateStartZoomDisplay() {
       document.getElementById('startZoomValue').textContent = document.getElementById('startZoom').value;
       updateCalculatedDuration();
+      updateMatchCutPreview();
     }
 
     function updateEndZoomDisplay() {
       document.getElementById('endZoomValue').textContent = document.getElementById('endZoom').value;
       updateCalculatedDuration();
+      updateMatchCutPreview();
     }
 
     function updateCurveDisplay() {
@@ -1396,22 +1798,134 @@
       }
       document.getElementById('curveValue').textContent = label;
       updateCalculatedDuration();
+      updateMatchCutStatus();
     }
 
-    function onZoomSkipChange() {
-      const enabled = document.getElementById('enableZoomSkip').checked;
-      const params = document.getElementById('zoomSkipParams');
+    function onMatchCutChange() {
+      const enabled = document.getElementById('enableMatchCut').checked;
+      const params = document.getElementById('matchCutParams');
       if (enabled) {
         params.classList.remove('hidden');
+        updateMatchCutPreview();
       } else {
         params.classList.add('hidden');
+        document.getElementById('matchCutStatus').style.display = 'none';
       }
     }
 
-    function updateMaxZoomDisplay() {
-      const value = document.getElementById('maxZoomLevels').value;
-      document.getElementById('maxZoomValue').textContent =
-        value + ' levels (animate first ' + value + ' out, last ' + value + ' in)';
+    function updateSpringStiffnessDisplay() {
+      const stiffness = parseFloat(document.getElementById('springStiffness').value);
+      const s = buildSpring(stiffness);
+      document.getElementById('springStiffnessValue').textContent =
+        stiffness + ' (~' + Math.round(s.duration) + 'ms)';
+    }
+
+    function updateStartZoomLevelsDisplay() {
+      const value = document.getElementById('startZoomLevels').value;
+      document.getElementById('startZoomLevelsValue').textContent =
+        value + ' levels (animate zooming out ' + value + ' levels, then cut)';
+      updateMatchCutPreview();
+    }
+
+    function updateEndZoomLevelsDisplay() {
+      const value = document.getElementById('endZoomLevels').value;
+      document.getElementById('endZoomLevelsValue').textContent =
+        value + ' levels (cut to ' + value + ' levels out, animate zoom in)';
+      updateMatchCutPreview();
+    }
+
+    function updateMatchCutPreview() {
+      if (!document.getElementById('enableMatchCut').checked) return;
+
+      const startZoom = parseFloat(document.getElementById('startZoom').value);
+      const endZoom = parseFloat(document.getElementById('endZoom').value);
+      const startLevels = parseFloat(document.getElementById('startZoomLevels').value);
+      const endLevels = parseFloat(document.getElementById('endZoomLevels').value);
+
+      const cutFromZoom = startZoom - startLevels;
+      const cutToZoom = endZoom - endLevels;
+
+      document.getElementById('matchCutPreview').innerHTML =
+        `Spring: ${defaultSpring.duration.toFixed(0)}ms, cut @ ${(defaultSpring.peakT * 100).toFixed(0)}%<br>` +
+        `z${startZoom} → z${cutFromZoom.toFixed(1)} | CUT | z${cutToZoom.toFixed(1)} → z${endZoom}`;
+
+      updateMatchCutStatus();
+    }
+
+    /**
+     * Live viability check — shows whether the match cut will actually work
+     * with current settings, or if it'll silently fall back to normal animation.
+     */
+    function updateMatchCutStatus() {
+      const statusEl = document.getElementById('matchCutStatus');
+      if (!document.getElementById('enableMatchCut').checked) {
+        statusEl.style.display = 'none';
+        return;
+      }
+
+      const preset = getCurrentPreset();
+      const algorithm = document.getElementById('algorithm').value;
+      const startZoom = parseFloat(document.getElementById('startZoom').value);
+      const endZoom = parseFloat(document.getElementById('endZoom').value);
+      const curve = parseFloat(document.getElementById('curve').value);
+      const startZoomLevels = parseFloat(document.getElementById('startZoomLevels').value);
+      const endZoomLevels = parseFloat(document.getElementById('endZoomLevels').value);
+
+      const mapDiv = document.getElementById('map');
+      const width = mapDiv?.clientWidth || 800;
+      const height = mapDiv?.clientHeight || 600;
+
+      const normalizedEndLng = normalizeLongitude(preset.end.lng, preset.start.lng);
+
+      const startProps = {
+        width, height,
+        longitude: preset.start.lng,
+        latitude: preset.start.lat,
+        zoom: startZoom
+      };
+      const endProps = {
+        longitude: normalizedEndLng,
+        latitude: preset.end.lat,
+        zoom: endZoom
+      };
+      const config = { curve, maxDuration: 15000 };
+
+      // Use calculateMatchCutParams directly — it now handles all zoom profiles
+      const result = calculateMatchCutParams(startProps, endProps, startZoomLevels, endZoomLevels, algorithm, config);
+
+      statusEl.style.display = 'block';
+
+      if (result.shouldSkip) {
+        const maxStart = result.maxChangeFromStart || 0;
+        const maxEnd = result.maxChangeFromEnd || 0;
+
+        if (maxStart < 0.6 || maxEnd < 0.6) {
+          statusEl.style.background = '#ffebee';
+          statusEl.style.color = '#c62828';
+          statusEl.innerHTML =
+            `<strong>Won't work for this distance.</strong><br>` +
+            `Max zoom change from start: <strong>${maxStart.toFixed(1)}</strong> levels, ` +
+            `from end: <strong>${maxEnd.toFixed(1)}</strong> levels.<br>` +
+            `Try a longer-distance preset or lower the curve (ρ) value.`;
+        } else {
+          const maxUsableStart = Math.floor(maxStart * 2) / 2;
+          const maxUsableEnd = Math.floor(maxEnd * 2) / 2;
+          statusEl.style.background = '#fff3e0';
+          statusEl.style.color = '#e65100';
+          statusEl.innerHTML =
+            `<strong>Requested levels too high or overlap.</strong><br>` +
+            `Max zoom change: <strong>${maxStart.toFixed(1)}</strong> from start, ` +
+            `<strong>${maxEnd.toFixed(1)}</strong> from end.<br>` +
+            `Try: start ≤ <strong>${maxUsableStart}</strong>, end ≤ <strong>${maxUsableEnd}</strong>`;
+        }
+      } else {
+        statusEl.style.background = '#e8f5e9';
+        statusEl.style.color = '#2e7d32';
+        statusEl.innerHTML =
+          `<strong>Match cut active.</strong> ` +
+          `Skipping ${(result.skipRatio * 100).toFixed(0)}% of the middle. ` +
+          `Cut at z${result.startCutZoom.toFixed(1)} → z${result.endCutZoom.toFixed(1)}`;
+      }
     }
 
     // Initialize
