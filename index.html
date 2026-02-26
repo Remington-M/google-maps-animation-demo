@@ -90,7 +90,12 @@
     .app {
       display: flex;
       flex-direction: column;
-      height: calc(100vh - 52px);
+      height: 100vh;
+      max-width: 2000px;
+      margin: 0 auto;
+      background: white;
+    }
+    body {
       background: white;
     }
 
@@ -159,7 +164,7 @@
     .content {
       flex: 1;
       display: flex;
-      overflow: hidden;
+      overflow-y: auto;
       position: relative;
     }
 
@@ -167,26 +172,25 @@
        LEFT PANEL
        ============================================ */
     .left-panel {
-      width: 420px;
+      width: 533px;
       flex-shrink: 0;
-      border-right: 1px solid #ebebeb;
-      overflow: hidden;
+      border-right: none;
+      overflow: visible;
       position: relative;
-      display: flex;
-      flex-direction: column;
     }
 
     /* ============================================
        TRIPS LIST VIEW
        ============================================ */
     #trips-view {
-      flex: 1;
-      overflow-y: auto;
-      padding: 32px 24px;
-      transition: opacity 0.3s, transform 0.3s;
+      padding: 32px 48px;
+      transition: opacity 0.25s ease;
     }
     #trips-view.hidden {
       display: none;
+    }
+    #trips-view.fading {
+      opacity: 0;
     }
     .trips-header {
       display: flex;
@@ -205,55 +209,67 @@
       color: #717171;
     }
     .section-label {
-      font-size: 12px;
-      font-weight: 700;
-      color: #717171;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-top: 28px;
-      margin-bottom: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      color: #222;
+      text-transform: none;
+      letter-spacing: normal;
+      margin-top: 24px;
+      margin-bottom: 10px;
     }
 
     /* Trip card */
     .trip-card {
       display: flex;
       align-items: center;
-      padding: 16px 12px;
-      gap: 16px;
+      padding: 10px;
+      gap: 0;
       cursor: pointer;
-      transition: background 0.15s, box-shadow 0.15s;
-      border-radius: 12px;
-      margin: 0 -12px;
-      border: 1px solid transparent;
+      transition: box-shadow 0.15s;
+      border-radius: 24px;
+      background: white;
+      box-shadow: 0 0 0 1px rgba(0,0,0,0.03), 0 8px 24px rgba(0,0,0,0.1);
+      margin-bottom: 10px;
     }
     .trip-card:hover {
-      background: #f7f7f7;
+      box-shadow: 0 0 0 1px rgba(0,0,0,0.03), 0 8px 24px rgba(0,0,0,0.15);
     }
     .trip-card.selected {
-      border-color: #222;
-      background: #f7f7f7;
+      box-shadow: 0 0 0 2px #222, 0 8px 24px rgba(0,0,0,0.1);
     }
-    .trip-info { flex: 1; min-width: 0; }
+    .trip-info {
+      flex: 1;
+      min-width: 0;
+      padding: 8px 8px;
+      height: 96px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+    }
     .trip-name {
-      font-size: 16px;
+      font-size: 18px;
       font-weight: 600;
       color: #222;
+      letter-spacing: -0.18px;
+      line-height: 24px;
     }
     .trip-dates {
-      font-size: 14px;
-      color: #717171;
-      margin-top: 2px;
+      font-size: 12px;
+      color: #6c6c6c;
+      margin-top: 0;
+      line-height: 16px;
+      font-weight: 400;
     }
     .trip-guests {
       display: flex;
       align-items: center;
-      margin-top: 8px;
+      margin-top: auto;
     }
     .guest-avatar {
       width: 24px; height: 24px;
       border-radius: 50%;
-      border: 2px solid white;
-      margin-right: -6px;
+      border: 1.5px solid white;
+      margin-right: -3.75px;
       overflow: hidden;
       display: flex; align-items: center; justify-content: center;
       font-size: 9px;
@@ -261,20 +277,25 @@
       color: white;
       flex-shrink: 0;
     }
+    .guest-avatar img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+    }
     .guest-more {
-      background: #f7f7f7;
-      border: 1px solid #ddd;
-      color: #717171;
+      background: #f2f2f2;
+      border: 1.5px solid white;
+      color: #222;
       font-size: 10px;
-      font-weight: 600;
+      font-weight: 700;
       width: 24px; height: 24px;
       border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
-      margin-left: 10px;
+      margin-left: 0;
+      margin-right: -3.75px;
     }
     .trip-thumbnail {
-      width: 80px; height: 80px;
-      border-radius: 12px;
+      width: 96px; height: 96px;
+      border-radius: 16px;
       overflow: hidden;
       flex-shrink: 0;
     }
@@ -289,17 +310,18 @@
     #trip-detail-view {
       display: none;
       flex-direction: column;
-      flex: 1;
-      overflow: hidden;
+      opacity: 0;
+      transition: opacity 0.25s ease;
     }
     #trip-detail-view.active {
       display: flex;
+      opacity: 1;
     }
     .detail-header {
       display: flex;
       align-items: center;
       gap: 16px;
-      padding: 24px 24px 20px;
+      padding: 24px 48px 20px;
       flex-shrink: 0;
     }
     .back-btn {
@@ -324,9 +346,7 @@
       letter-spacing: -0.5px;
     }
     .detail-scroll {
-      flex: 1;
-      overflow-y: auto;
-      padding: 0 24px 32px;
+      padding: 0 48px 32px;
     }
 
     /* Stay card */
@@ -476,19 +496,52 @@
        ============================================ */
     .map-area {
       flex: 1;
-      position: relative;
+      position: sticky;
+      top: 0;
+      height: calc(100vh - 80px);
       overflow: hidden;
+      padding: 32px 48px 48px 48px;
     }
     #map {
       width: 100%;
       height: 100%;
+      border-radius: 32px;
+      overflow: hidden;
+    }
+
+    /* Animation mode toggle */
+    .anim-toggle {
+      position: absolute;
+      bottom: 64px;
+      right: 64px;
+      z-index: 10;
+      display: flex;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+      overflow: hidden;
+    }
+    .anim-toggle-btn {
+      padding: 10px 18px;
+      border: none;
+      background: transparent;
+      font-size: 13px;
+      font-weight: 600;
+      color: #717171;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+      white-space: nowrap;
+    }
+    .anim-toggle-btn.active {
+      background: #222;
+      color: white;
     }
 
     /* Map controls overlay */
     .map-controls {
       position: absolute;
-      top: 16px;
-      right: 16px;
+      top: 48px;
+      right: 64px;
       display: flex;
       flex-direction: column;
       gap: 8px;
@@ -520,8 +573,8 @@
     /* Map category filters (detail view) */
     .map-categories {
       position: absolute;
-      bottom: 16px;
-      left: 50%;
+      bottom: 64px;
+      left: calc(50% + 24px);
       transform: translateX(-50%);
       display: flex;
       gap: 8px;
@@ -597,6 +650,30 @@
       white-space: nowrap;
     }
 
+    /* Stay pin (destination) */
+    .stay-pin {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .stay-pin-icon {
+      width: 106px;
+      height: 110px;
+    }
+    .stay-pin-icon img {
+      width: 100%;
+      height: 100%;
+    }
+    .stay-pin-label {
+      margin-top: -16px;
+      font-size: 12px;
+      font-weight: 500;
+      color: #111;
+      text-align: center;
+      white-space: nowrap;
+      text-shadow: 0 1px 3px rgba(255,255,255,0.9), 0 0 1px rgba(255,255,255,1);
+    }
+
     /* Past trip pin style (smaller, muted) */
     .trip-map-pin.past .pin-image-wrap {
       width: 32px; height: 32px;
@@ -612,7 +689,7 @@
       position: fixed;
       bottom: 20px;
       right: 20px;
-      background: rgba(0,0,0,0.75);
+      background: #222;
       color: white;
       border: none;
       border-radius: 20px;
@@ -622,11 +699,10 @@
       cursor: pointer;
       z-index: 1000;
       letter-spacing: 1px;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.3);
-      backdrop-filter: blur(8px);
+      box-shadow: 0 2px 12px rgba(0,0,0,0.2);
       transition: background 0.15s;
     }
-    .dev-toggle-btn:hover { background: rgba(0,0,0,0.9); }
+    .dev-toggle-btn:hover { background: #444; }
 
     .dev-panel {
       position: fixed;
@@ -634,12 +710,12 @@
       right: -400px;
       width: 380px;
       height: 100%;
-      background: #111;
-      color: #ccc;
+      background: white;
+      color: #222;
       z-index: 999;
       overflow-y: auto;
       transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      box-shadow: -4px 0 24px rgba(0,0,0,0.4);
+      box-shadow: -4px 0 24px rgba(0,0,0,0.12);
       font-size: 13px;
       padding: 20px;
     }
@@ -650,29 +726,29 @@
       justify-content: space-between;
       margin-bottom: 20px;
       padding-bottom: 12px;
-      border-bottom: 1px solid #2a2a2a;
+      border-bottom: 1px solid #ebebeb;
     }
     .dev-panel-title {
       font-size: 13px;
       font-weight: 700;
-      color: white;
+      color: #222;
       letter-spacing: 0.5px;
     }
     .dev-panel-close {
       background: none;
       border: none;
-      color: #666;
+      color: #717171;
       cursor: pointer;
       font-size: 20px;
       line-height: 1;
       padding: 4px;
     }
-    .dev-panel-close:hover { color: white; }
+    .dev-panel-close:hover { color: #222; }
     .dev-section { margin-bottom: 20px; }
     .dev-section-title {
       font-size: 10px;
       font-weight: 700;
-      color: #555;
+      color: #717171;
       letter-spacing: 1.5px;
       text-transform: uppercase;
       margin-bottom: 10px;
@@ -683,24 +759,24 @@
       justify-content: space-between;
       margin-bottom: 6px;
     }
-    .dev-label { color: #888; font-size: 12px; }
-    .dev-value { color: #4ade80; font-size: 12px; font-family: 'SF Mono', 'Fira Code', monospace; }
-    .dev-value.warning { color: #fbbf24; }
-    .dev-value.error { color: #f87171; }
+    .dev-label { color: #717171; font-size: 12px; }
+    .dev-value { color: #FF385C; font-size: 12px; font-family: 'SF Mono', 'Fira Code', monospace; }
+    .dev-value.warning { color: #e07912; }
+    .dev-value.error { color: #c13515; }
     .dev-slider-row { margin-bottom: 14px; }
     .dev-slider-header {
       display: flex;
       justify-content: space-between;
       margin-bottom: 4px;
     }
-    .dev-slider-header span:first-child { color: #888; font-size: 12px; }
-    .dev-slider-header span:last-child { color: white; font-size: 12px; font-family: 'SF Mono', 'Fira Code', monospace; }
+    .dev-slider-header span:first-child { color: #717171; font-size: 12px; }
+    .dev-slider-header span:last-child { color: #222; font-size: 12px; font-family: 'SF Mono', 'Fira Code', monospace; }
     input[type=range].dev-slider {
       width: 100%;
       -webkit-appearance: none;
       appearance: none;
       height: 3px;
-      background: #333;
+      background: #ddd;
       border-radius: 2px;
       outline: none;
     }
@@ -709,9 +785,9 @@
       appearance: none;
       width: 14px; height: 14px;
       border-radius: 50%;
-      background: white;
+      background: #FF385C;
       cursor: pointer;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.2);
     }
     .dev-checkbox-row {
       display: flex;
@@ -719,15 +795,15 @@
       gap: 8px;
       margin-bottom: 8px;
     }
-    .dev-checkbox-row label { color: #888; font-size: 12px; cursor: pointer; }
+    .dev-checkbox-row label { color: #717171; font-size: 12px; cursor: pointer; }
     .dev-checkbox-row input[type=checkbox] {
-      accent-color: #4ade80;
+      accent-color: #FF385C;
     }
     .dev-select {
       width: 100%;
-      background: #1a1a1a;
-      border: 1px solid #333;
-      color: white;
+      background: white;
+      border: 1px solid #ddd;
+      color: #222;
       padding: 6px 8px;
       border-radius: 6px;
       font-size: 12px;
@@ -736,20 +812,20 @@
     }
     .dev-divider {
       border: none;
-      border-top: 1px solid #222;
+      border-top: 1px solid #ebebeb;
       margin: 16px 0;
     }
     .dev-progress-bar {
       width: 100%;
       height: 3px;
-      background: #222;
+      background: #ebebeb;
       border-radius: 2px;
       overflow: hidden;
       margin-top: 8px;
     }
     .dev-progress-fill {
       height: 100%;
-      background: #4ade80;
+      background: #FF385C;
       border-radius: 2px;
       width: 0%;
       transition: width 50ms linear;
@@ -839,26 +915,13 @@
     /* ============================================
        MATCH CUT FLASH
        ============================================ */
-    .cut-flash {
-      position: fixed;
-      inset: 0;
-      background: black;
-      opacity: 0;
-      pointer-events: none;
-      z-index: 100;
-      transition: opacity 60ms;
-    }
-    .cut-flash.active {
-      opacity: 0.15;
-    }
 
     /* Scrollbar styling */
-    .left-panel ::-webkit-scrollbar { width: 6px; }
-    .left-panel ::-webkit-scrollbar-track { background: transparent; }
-    .left-panel ::-webkit-scrollbar-thumb { background: #ddd; border-radius: 3px; }
+    .content::-webkit-scrollbar { display: none; }
+    .content { -ms-overflow-style: none; scrollbar-width: none; }
     .dev-panel::-webkit-scrollbar { width: 6px; }
     .dev-panel::-webkit-scrollbar-track { background: transparent; }
-    .dev-panel::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+    .dev-panel::-webkit-scrollbar-thumb { background: #ddd; border-radius: 3px; }
   </style>
 </head>
 <body>
@@ -877,40 +940,12 @@
     <button class="api-key-btn" onclick="loadMapWithInputKey()">Load Map</button>
   </div>
 
-  <!-- Match cut flash overlay -->
-  <div class="cut-flash" id="cut-flash"></div>
-
-  <!-- Browser chrome -->
-  <div class="browser-chrome">
-    <div class="browser-dots">
-      <div class="browser-dot red"></div>
-      <div class="browser-dot yellow"></div>
-      <div class="browser-dot green"></div>
-    </div>
-    <div class="browser-nav-btns">
-      <div class="browser-nav-btn">‹</div>
-      <div class="browser-nav-btn">›</div>
-    </div>
-    <div class="browser-url-bar">
-      <span class="browser-url-lock">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-      </span>
-      <span class="browser-url-text">www.airbnb.com</span>
-    </div>
-    <div class="browser-chrome-right">
-      <div class="browser-chrome-btn">↻</div>
-      <div class="browser-chrome-btn">☰</div>
-    </div>
-  </div>
-
   <!-- App -->
   <div class="app">
     <!-- Nav bar -->
     <nav class="nav">
       <div class="nav-logo">
-        <svg viewBox="0 0 29 32" fill="#FF385C" height="32">
-          <path d="M14.5 0C10.634 0 7.625 3.068 6.467 5.776c-1.198 2.804-1.681 6.312-1.206 9.872.462 3.46 1.63 6.376 3.47 8.535 1.896 2.226 4.414 3.479 7.318 2.985 1.047-.178 1.907-.597 2.613-1.15.706.553 1.566.972 2.613 1.15 2.904.494 5.422-.759 7.318-2.985 1.84-2.159 3.008-5.075 3.47-8.535.475-3.56-.008-7.068-1.206-9.872C29.699 3.068 26.69 0 22.824 0h-8.324zm5.09 22.653c-.538.42-1.157.65-1.823.65-.37 0-.76-.07-1.164-.218-.323-.118-.629-.27-.91-.454a6.462 6.462 0 0 1-.91.454c-.405.147-.793.218-1.164.218-.666 0-1.285-.23-1.824-.65-1.162-.908-1.872-2.594-1.872-4.813 0-3.054 2.268-7.15 5.77-10.636 3.502 3.486 5.77 7.582 5.77 10.636-.001 2.219-.711 3.905-1.873 4.813z"/>
-        </svg>
+        <img src="images/airbnb-logo.svg" alt="Airbnb" width="103" height="32">
       </div>
       <div class="nav-right">
         <a class="nav-switch-hosting">Switch to hosting</a>
@@ -957,6 +992,10 @@
       <!-- Map -->
       <div class="map-area">
         <div id="map"></div>
+        <div class="anim-toggle" id="anim-toggle">
+          <button class="anim-toggle-btn active" data-mode="matchcut" onclick="setAnimMode('matchcut')">Match Cut</button>
+          <button class="anim-toggle-btn" data-mode="smooth" onclick="setAnimMode('smooth')">Default</button>
+        </div>
         <div class="map-controls">
           <button class="map-ctrl-btn expand" onclick="map && map.setZoom(map.getZoom())">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
@@ -1072,25 +1111,25 @@
         <div class="dev-slider-row">
           <div class="dev-slider-header">
             <span>Start zoom levels</span>
-            <span id="dev-start-levels-val">1.5</span>
+            <span id="dev-start-levels-val">1</span>
           </div>
-          <input type="range" class="dev-slider" id="dev-start-levels" min="0.5" max="8" step="0.5" value="1.5"
+          <input type="range" class="dev-slider" id="dev-start-levels" min="0.5" max="8" step="0.5" value="1"
             oninput="document.getElementById('dev-start-levels-val').textContent = this.value">
         </div>
         <div class="dev-slider-row">
           <div class="dev-slider-header">
             <span>End zoom levels</span>
-            <span id="dev-end-levels-val">2.0</span>
+            <span id="dev-end-levels-val">2</span>
           </div>
-          <input type="range" class="dev-slider" id="dev-end-levels" min="0.5" max="8" step="0.5" value="2.0"
+          <input type="range" class="dev-slider" id="dev-end-levels" min="0.5" max="8" step="0.5" value="2"
             oninput="document.getElementById('dev-end-levels-val').textContent = this.value">
         </div>
         <div class="dev-slider-row">
           <div class="dev-slider-header">
             <span>Spring stiffness</span>
-            <span id="dev-stiffness-val">120</span>
+            <span id="dev-stiffness-val">20</span>
           </div>
-          <input type="range" class="dev-slider" id="dev-stiffness" min="10" max="400" step="10" value="120"
+          <input type="range" class="dev-slider" id="dev-stiffness" min="10" max="400" step="10" value="20"
             oninput="document.getElementById('dev-stiffness-val').textContent = this.value">
         </div>
       </div>
@@ -1120,11 +1159,11 @@
         dateRange: 'June 5 – 13',
         coords: { lat: 48.8566, lng: 2.3522 },
         upcoming: true,
-        thumbnail: 'https://images.unsplash.com/photo-1549739425-b93c8640b5cf?w=300&h=300&fit=crop',
+        thumbnail: 'images/paris.png',
         guests: [
-          { initials: 'A', color: '#6366f1' },
-          { initials: 'M', color: '#ec4899' },
-          { initials: 'J', color: '#f59e0b' },
+          { avatar: 'images/avatar-1.png' },
+          { avatar: 'images/avatar-2.png' },
+          { avatar: 'images/avatar-3.png' },
         ],
         guestMore: '+1',
         pinContext: 'In 3 weeks',
@@ -1132,7 +1171,7 @@
           title: 'Your stay',
           dateRange: 'June 5 – 13',
           host: 'Hosted by Audrey',
-          image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&h=300&fit=crop',
+          image: 'images/paris.png',
         },
         itinerary: [
           {
@@ -1142,14 +1181,14 @@
           },
           {
             day: 'Sat', date: 6, items: [
-              { title: 'Explore the Louvre', subtitle: '10:00 AM · Hosted by Elide', image: 'https://images.unsplash.com/photo-1499856871958-5b9627545d1a?w=200&h=200&fit=crop' },
-              { title: 'Eiffel tower photoshoot', subtitle: '4:00 PM · Hosted by Charles', image: 'https://images.unsplash.com/photo-1543349689-9a4d426bee8e?w=200&h=200&fit=crop' },
+              { title: 'Explore the Louvre', subtitle: '10:00 AM · Hosted by Elide', image: 'images/paris.png' },
+              { title: 'Eiffel tower photoshoot', subtitle: '4:00 PM · Hosted by Charles', image: 'images/paris.png' },
             ]
           },
           {
             day: 'Mon', date: 8, items: [
-              { title: 'Bistro des poèmes', subtitle: 'Cafe', image: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=200&h=200&fit=crop', hasMore: true },
-              { title: 'Jardin du Luxembourg', subtitle: 'Park', image: 'https://images.unsplash.com/photo-1555397430-57791c75748a?w=200&h=200&fit=crop', hasMore: true },
+              { title: 'Bistro des poèmes', subtitle: 'Cafe', image: 'images/paris.png', hasMore: true },
+              { title: 'Jardin du Luxembourg', subtitle: 'Park', image: 'images/paris.png', hasMore: true },
             ]
           },
           {
@@ -1165,23 +1204,22 @@
         dateRange: 'November 12 – 16',
         coords: { lat: 37.7749, lng: -122.4194 },
         upcoming: true,
-        thumbnail: 'https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=300&h=300&fit=crop',
+        thumbnail: 'images/san-francisco.png',
         guests: [
-          { initials: 'K', color: '#10b981' },
-          { initials: 'R', color: '#6366f1' },
+          { avatar: 'images/avatar-1.png' },
         ],
         pinContext: 'Nov 12 – 16',
         stay: {
           title: 'Your stay',
           dateRange: 'November 12 – 16',
           host: 'Hosted by Marcus',
-          image: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400&h=300&fit=crop',
+          image: 'images/san-francisco.png',
         },
         itinerary: [
           { day: 'Tue', date: 12, items: [{ title: 'Check in', subtitle: 'After 3:00 PM', icon: '🔑' }] },
           { day: 'Wed', date: 13, items: [
-            { title: 'Golden Gate walk', subtitle: '9:00 AM', image: 'https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=200&h=200&fit=crop' },
-            { title: 'Fisherman\'s Wharf', subtitle: 'Lunch spot', image: 'https://images.unsplash.com/photo-1534050359320-02900022671e?w=200&h=200&fit=crop', hasMore: true },
+            { title: 'Golden Gate walk', subtitle: '9:00 AM', image: 'images/san-francisco.png' },
+            { title: 'Fisherman\'s Wharf', subtitle: 'Lunch spot', image: 'images/san-francisco.png', hasMore: true },
           ]},
           { day: 'Sat', date: 16, items: [{ title: 'Check out', subtitle: 'Before 11:00 AM', icon: '🏠' }] },
         ]
@@ -1192,23 +1230,23 @@
         dateRange: 'December 27 – January 3, 2027',
         coords: { lat: -22.9068, lng: -43.1729 },
         upcoming: true,
-        thumbnail: 'https://images.unsplash.com/photo-1483729558449-99ef09a8c325?w=300&h=300&fit=crop',
+        thumbnail: 'images/rio.png',
         guests: [
-          { initials: 'R', color: '#6366f1' },
-          { initials: 'S', color: '#ec4899' },
+          { avatar: 'images/avatar-1.png' },
+          { avatar: 'images/avatar-4.png' },
         ],
         pinContext: 'Dec 27 – Jan 3',
         stay: {
           title: 'Your stay',
           dateRange: 'December 27 – January 3',
           host: 'Hosted by Lucia',
-          image: 'https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=400&h=300&fit=crop',
+          image: 'images/rio.png',
         },
         itinerary: [
           { day: 'Sat', date: 27, items: [{ title: 'Check in', subtitle: 'After 2:00 PM', icon: '🔑' }] },
           { day: 'Sun', date: 28, items: [
-            { title: 'Christ the Redeemer', subtitle: '8:00 AM · Tour', image: 'https://images.unsplash.com/photo-1483729558449-99ef09a8c325?w=200&h=200&fit=crop' },
-            { title: 'Copacabana Beach', subtitle: 'Beach day', image: 'https://images.unsplash.com/photo-1516306580123-e6e52b1b7b5f?w=200&h=200&fit=crop', hasMore: true },
+            { title: 'Christ the Redeemer', subtitle: '8:00 AM · Tour', image: 'images/rio.png' },
+            { title: 'Copacabana Beach', subtitle: 'Beach day', image: 'images/rio.png', hasMore: true },
           ]},
           { day: 'Fri', date: 3, items: [{ title: 'Check out', subtitle: 'Before 12:00 PM', icon: '🏠' }] },
         ]
@@ -1219,11 +1257,11 @@
         dateRange: 'April 17, 2027',
         coords: { lat: 34.0522, lng: -118.2437 },
         upcoming: true,
-        thumbnail: 'https://images.unsplash.com/photo-1534190760961-74e8c1c5c3da?w=300&h=300&fit=crop',
+        thumbnail: 'images/los-angeles.png',
         guests: [
-          { initials: 'A', color: '#f59e0b' },
-          { initials: 'B', color: '#10b981' },
-          { initials: 'C', color: '#6366f1' },
+          { avatar: 'images/avatar-1.png' },
+          { avatar: 'images/avatar-2.png' },
+          { avatar: 'images/avatar-5.png' },
         ],
         guestMore: '+7',
         pinContext: 'Apr 17',
@@ -1231,12 +1269,12 @@
           title: 'Your stay',
           dateRange: 'April 17, 2027',
           host: 'Hosted by David',
-          image: 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=400&h=300&fit=crop',
+          image: 'images/los-angeles.png',
         },
         itinerary: [
           { day: 'Sat', date: 17, items: [
             { title: 'Check in', subtitle: 'After 3:00 PM', icon: '🔑' },
-            { title: 'Venice Beach sunset', subtitle: '5:30 PM', image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=200&h=200&fit=crop' },
+            { title: 'Venice Beach sunset', subtitle: '5:30 PM', image: 'images/los-angeles.png' },
           ]},
         ]
       },
@@ -1246,22 +1284,23 @@
         dateRange: 'November 22-29, 2027',
         coords: { lat: 39.5501, lng: -105.7821 },
         upcoming: true,
-        thumbnail: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=300&h=300&fit=crop',
+        thumbnail: 'images/colorado.png',
         guests: [
-          { initials: 'R', color: '#6366f1' },
-          { initials: 'K', color: '#ec4899' },
+          { avatar: 'images/avatar-1.png' },
+          { avatar: 'images/avatar-2.png' },
+          { avatar: 'images/avatar-3.png' },
         ],
         pinContext: 'Nov 22 – 29',
         stay: {
           title: 'Your stay',
           dateRange: 'November 22-29, 2027',
           host: 'Hosted by James',
-          image: 'https://images.unsplash.com/photo-1518780664697-55e3ad937233?w=400&h=300&fit=crop',
+          image: 'images/colorado.png',
         },
         itinerary: [
           { day: 'Sat', date: 22, items: [{ title: 'Check in', subtitle: 'After 4:00 PM', icon: '🔑' }] },
           { day: 'Sun', date: 23, items: [
-            { title: 'Ski at Vail', subtitle: '8:00 AM', image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=200&h=200&fit=crop' },
+            { title: 'Ski at Vail', subtitle: '8:00 AM', image: 'images/colorado.png' },
           ]},
           { day: 'Sat', date: 29, items: [{ title: 'Check out', subtitle: 'Before 10:00 AM', icon: '🏠' }] },
         ]
@@ -1270,49 +1309,63 @@
       {
         id: 'tokyo',
         name: 'Tokyo',
-        dateRange: '2025',
+        dateRange: 'May 23 – 26, 2025',
         coords: { lat: 35.6762, lng: 139.6503 },
         upcoming: false,
-        thumbnail: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=300&h=300&fit=crop',
-        guests: [{ initials: 'R', color: '#6366f1' }],
+        thumbnail: 'images/tokyo.png',
+        guests: [
+          { avatar: 'images/avatar-1.png' },
+          { avatar: 'images/avatar-5.png' },
+        ],
         pinContext: '2025',
-        stay: { title: 'Your stay', dateRange: '2025', host: 'Hosted by Yuki', image: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=400&h=300&fit=crop' },
+        stay: { title: 'Your stay', dateRange: '2025', host: 'Hosted by Yuki', image: 'images/tokyo.png' },
         itinerary: [{ day: '', date: '', items: [{ title: 'Past trip', subtitle: 'Tokyo, 2025', icon: '✈️' }] }]
       },
       {
         id: 'charleston',
         name: 'Charleston',
-        dateRange: '2024',
+        dateRange: 'September 12 – 18, 2024',
         coords: { lat: 32.7765, lng: -79.9311 },
         upcoming: false,
-        thumbnail: 'https://images.unsplash.com/photo-1569974507005-6dc61f97fb5c?w=300&h=300&fit=crop',
-        guests: [{ initials: 'R', color: '#6366f1' }],
+        thumbnail: 'images/charleston.png',
+        guests: [
+          { avatar: 'images/avatar-1.png' },
+          { avatar: 'images/avatar-2.png' },
+        ],
         pinContext: '2024',
-        stay: { title: 'Your stay', dateRange: '2024', host: 'Hosted by Emily', image: 'https://images.unsplash.com/photo-1569974507005-6dc61f97fb5c?w=400&h=300&fit=crop' },
+        stay: { title: 'Your stay', dateRange: '2024', host: 'Hosted by Emily', image: 'images/charleston.png' },
         itinerary: [{ day: '', date: '', items: [{ title: 'Past trip', subtitle: 'Charleston, 2024', icon: '✈️' }] }]
       },
       {
         id: 'austin',
         name: 'Austin',
-        dateRange: '2024',
+        dateRange: 'May 3 – 6, 2024',
         coords: { lat: 30.2672, lng: -97.7431 },
         upcoming: false,
-        thumbnail: 'https://images.unsplash.com/photo-1588993608081-3f06e2e5e0b5?w=300&h=300&fit=crop',
-        guests: [{ initials: 'R', color: '#6366f1' }],
+        thumbnail: 'images/austin.png',
+        guests: [
+          { avatar: 'images/avatar-1.png' },
+          { avatar: 'images/avatar-2.png' },
+          { avatar: 'images/avatar-3.png' },
+        ],
+        guestMore: '+2',
         pinContext: '2024',
-        stay: { title: 'Your stay', dateRange: '2024', host: 'Hosted by Jake', image: 'https://images.unsplash.com/photo-1588993608081-3f06e2e5e0b5?w=400&h=300&fit=crop' },
+        stay: { title: 'Your stay', dateRange: '2024', host: 'Hosted by Jake', image: 'images/austin.png' },
         itinerary: [{ day: '', date: '', items: [{ title: 'Past trip', subtitle: 'Austin, 2024', icon: '✈️' }] }]
       },
       {
         id: 'queenstown',
         name: 'Queenstown',
-        dateRange: '2023',
+        dateRange: 'Nov 11 – 18, 2023',
         coords: { lat: -45.0312, lng: 168.6626 },
         upcoming: false,
-        thumbnail: 'https://images.unsplash.com/photo-1507699622108-4be3abd695ad?w=300&h=300&fit=crop',
-        guests: [{ initials: 'R', color: '#6366f1' }],
+        thumbnail: 'images/queenstown.png',
+        guests: [
+          { avatar: 'images/avatar-1.png' },
+          { avatar: 'images/avatar-2.png' },
+        ],
         pinContext: '2023',
-        stay: { title: 'Your stay', dateRange: '2023', host: 'Hosted by Liam', image: 'https://images.unsplash.com/photo-1507699622108-4be3abd695ad?w=400&h=300&fit=crop' },
+        stay: { title: 'Your stay', dateRange: '2023', host: 'Hosted by Liam', image: 'images/queenstown.png' },
         itinerary: [{ day: '', date: '', items: [{ title: 'Past trip', subtitle: 'Queenstown, 2023', icon: '✈️' }] }]
       },
     ];
@@ -1646,6 +1699,7 @@
     // ============================================
     let map = null;
     let mapMarkers = [];
+    let stayMarker = null;
     let animationId = null;
     let isAnimating = false;
     let frameCount = 0;
@@ -1718,7 +1772,7 @@
 
     function createTripCard(trip) {
       const guestAvatars = trip.guests.map(g =>
-        `<div class="guest-avatar" style="background:${g.color}">${g.initials}</div>`
+        `<div class="guest-avatar"><img src="${g.avatar}" alt="Guest"></div>`
       ).join('');
       const more = trip.guestMore ? `<div class="guest-more">${trip.guestMore}</div>` : '';
 
@@ -1779,6 +1833,28 @@
       mapMarkers.forEach(m => m.map = map);
     }
 
+    function showStayMarker(trip) {
+      hideStayMarker();
+      const pinEl = document.createElement('div');
+      pinEl.className = 'stay-pin';
+      pinEl.innerHTML = `
+        <div class="stay-pin-icon"><img src="images/stay-pin.svg" alt="Your stay"></div>
+        <div class="stay-pin-label">Your stay</div>
+      `;
+      stayMarker = new google.maps.marker.AdvancedMarkerElement({
+        map: map,
+        position: trip.coords,
+        content: pinEl,
+      });
+    }
+
+    function hideStayMarker() {
+      if (stayMarker) {
+        stayMarker.map = null;
+        stayMarker = null;
+      }
+    }
+
     // ============================================
     // TRIP SELECTION & NAVIGATION
     // ============================================
@@ -1794,10 +1870,14 @@
       const card = document.querySelector(`[data-trip-id="${tripId}"]`);
       if (card) card.classList.add('selected');
 
-      // Hide markers during animation
+      // Hide trip markers, show stay pin at destination
       hideMarkers();
+      showStayMarker(trip);
 
-      // Animate to trip location
+      // Transition panel immediately
+      showTripDetail(trip);
+
+      // Animate map independently
       animateToTrip(trip);
     }
 
@@ -1805,7 +1885,13 @@
       if (isAnimating) return;
       if (!selectedTrip) return;
 
-      // Animate back to home
+      // Hide stay pin
+      hideStayMarker();
+
+      // Transition panel immediately
+      showTripsView();
+
+      // Animate map independently
       animateToHome();
     }
 
@@ -1814,8 +1900,20 @@
     // ============================================
     function showTripsView() {
       currentView = 'trips';
-      document.getElementById('trips-view').classList.remove('hidden');
-      document.getElementById('trip-detail-view').classList.remove('active');
+      const tripsView = document.getElementById('trips-view');
+      const detailView = document.getElementById('trip-detail-view');
+
+      // Fade out detail
+      detailView.style.opacity = '0';
+      setTimeout(() => {
+        detailView.classList.remove('active');
+        tripsView.classList.remove('hidden');
+        // Trigger fade in
+        requestAnimationFrame(() => {
+          tripsView.classList.remove('fading');
+        });
+      }, 200);
+
       document.getElementById('map-categories').classList.remove('visible');
 
       // Deselect
@@ -1828,19 +1926,30 @@
 
     function showTripDetail(trip) {
       currentView = 'detail';
-      document.getElementById('trips-view').classList.add('hidden');
-      document.getElementById('trip-detail-view').classList.add('active');
-      document.getElementById('map-categories').classList.add('visible');
+      const tripsView = document.getElementById('trips-view');
+      const detailView = document.getElementById('trip-detail-view');
 
-      // Populate detail
+      // Populate detail content before showing
       document.getElementById('detail-city-name').textContent = trip.name;
       document.getElementById('detail-scroll').innerHTML = buildDetailContent(trip);
+
+      // Fade out trips list
+      tripsView.classList.add('fading');
+      setTimeout(() => {
+        tripsView.classList.add('hidden');
+        tripsView.classList.remove('fading');
+        detailView.classList.add('active');
+        // Trigger fade in
+        requestAnimationFrame(() => {
+          detailView.style.opacity = '1';
+        });
+      }, 200);
     }
 
     function buildDetailContent(trip) {
       const stay = trip.stay;
       const guestAvatars = trip.guests.map(g =>
-        `<div class="guest-avatar" style="background:${g.color}">${g.initials}</div>`
+        `<div class="guest-avatar"><img src="${g.avatar}" alt="Guest"></div>`
       ).join('');
       const more = trip.guestMore ? `<div class="guest-more">${trip.guestMore}</div>` : '';
 
@@ -1944,9 +2053,7 @@
         zoom: cfg.endZoom
       };
 
-      runAnimation(startProps, endProps, cfg, () => {
-        showTripDetail(trip);
-      });
+      runAnimation(startProps, endProps, cfg);
     }
 
     function animateToHome() {
@@ -1973,9 +2080,7 @@
         zoom: cfg.startZoom
       };
 
-      runAnimation(startProps, endProps, cfg, () => {
-        showTripsView();
-      });
+      runAnimation(startProps, endProps, cfg);
     }
 
     function runAnimation(startProps, endProps, cfg, onComplete) {
@@ -2027,7 +2132,6 @@
 
       let cutTriggered = false;
       const startTime = performance.now();
-      const cutFlash = document.getElementById('cut-flash');
 
       function animate(currentTime) {
         const elapsed = currentTime - startTime;
@@ -2080,12 +2184,6 @@
             : simpleInterpolate(startProps, endProps, algorithmT);
         }
 
-        // Cut flash effect
-        if (showCut) {
-          cutFlash.classList.add('active');
-          setTimeout(() => cutFlash.classList.remove('active'), 80);
-        }
-
         // Apply to map
         map.moveCamera({
           center: { lat: result.latitude, lng: result.longitude },
@@ -2110,7 +2208,7 @@
           isAnimating = false;
           animationId = null;
           document.getElementById('dev-phase').textContent = 'Done';
-          document.getElementById('dev-phase').style.color = '#4ade80';
+          document.getElementById('dev-phase').style.color = '#FF385C';
           if (onComplete) onComplete();
         }
       }
@@ -2134,17 +2232,27 @@
       const phaseEl = document.getElementById('dev-phase');
       if (phase === 'start') {
         phaseEl.textContent = '1: Zoom Out';
-        phaseEl.style.color = '#60a5fa';
       } else if (phase === 'cut') {
         phaseEl.textContent = 'CUT!';
-        phaseEl.style.color = '#f87171';
       } else if (phase === 'end') {
         phaseEl.textContent = '2: Zoom In';
-        phaseEl.style.color = '#4ade80';
       } else {
         phaseEl.textContent = 'Animating';
-        phaseEl.style.color = '#fbbf24';
       }
+      phaseEl.style.color = '#FF385C';
+    }
+
+    // ============================================
+    // ANIMATION MODE TOGGLE
+    // ============================================
+    function setAnimMode(mode) {
+      const checkbox = document.getElementById('dev-match-cut');
+      checkbox.checked = (mode === 'matchcut');
+      checkbox.dispatchEvent(new Event('change'));
+
+      document.querySelectorAll('.anim-toggle-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.mode === mode);
+      });
     }
 
     // ============================================

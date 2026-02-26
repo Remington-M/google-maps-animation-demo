@@ -1,5 +1,105 @@
 # Changelog
 
+## Session: 2026-02-25 (Part 3) — UI Polish & Deployment
+
+### Overview
+Polished the Trips UI to closely match the Figma design, decoupled the side panel from the map animation, added an animation mode toggle, and deployed to Kyber.
+
+### What Changed
+
+#### UI Cleanup (Figma-accurate)
+- **Trip card styling**: Matched Figma specs — 24px border-radius, 10px padding, 96x96 thumbnails with 16px radius, `0 8px 24px rgba(0,0,0,0.1)` drop shadow, 18px semibold city name, 12px #6c6c6c dates
+- **Photo avatars**: Replaced colored-circle initials with actual avatar images extracted from Figma
+- **Local images**: Downloaded all 9 trip thumbnails, 5 avatar photos, the Airbnb logo, and "Your stay" pin from Figma — no more Unsplash dependencies
+- **Airbnb logo**: Replaced broken inline SVG with the actual wordmark from Figma (`images/airbnb-logo.svg`)
+- **"Past trips" label**: Changed from 12px uppercase to 16px semibold to match Figma
+- **Filter bar removed**: No longer shows category bar when viewing trip details
+
+#### Layout Changes
+- **Fixed left panel width**: 533px (matching Figma's 0.36:0.64 split at 1440px)
+- **Centered layout**: Max-width 2000px, centered horizontally
+- **Map border-radius**: 32px with 32px/48px padding around the map
+- **Left panel padding**: Increased to 48px horizontal to match Figma insets
+- **Browser chrome removed**: App now takes full viewport height
+- **Scrollbar**: Moved to right edge of page (on `.content`), then hidden entirely
+- **White background**: Clean white instead of gray
+
+#### Decoupled Panel & Map
+- Side panel transitions immediately on trip select/back (200ms crossfade) instead of waiting for the full map animation to complete
+- Map animates independently — much more responsive feel
+
+#### "Your stay" Destination Pin
+- Added Airbnb "Your stay" pin (dark circle with house icon + label) from Figma node `182:94360`
+- Pin appears centered on destination coordinates when a trip is selected
+- Removed on navigate back
+
+#### Animation Mode Toggle
+- **Match Cut / Default** segmented control in bottom-right of map
+- Clean pill-shaped toggle, always visible (not in dev panel)
+- Toggles the match cut on/off for easy A/B comparison
+
+#### Dev Panel Restyled
+- White background with Rausch (#FF385C) accent color
+- Slider thumbs, progress bar, phase indicator, checkbox all use Rausch
+- DEV toggle button uses #222
+- All phase states use consistent Rausch color
+
+#### Match Cut Flash Removed
+- Removed the black scrim overlay that flashed during the cut frame
+
+#### Updated Defaults
+- Start zoom levels: 1 (was 1.5)
+- End zoom levels: 1.5 (was 2.0)
+- Spring stiffness: 20 (was 120)
+
+### Kyber Deployment
+- Created Kyber prototype: `trips-map-camera-animation`
+- Slug: `trips-map-camera-animation`
+- Wrapped vanilla HTML in iframe via `App.tsx` (Kyber requires React entry point)
+- Static assets (images, config, app.html) served from `public/`
+- API key restricted to `prototypes.sandcastle.musta.ch` via Google Cloud Console
+- **Production URL**: `https://prototypes.sandcastle.musta.ch/trips-map-camera-animation/`
+- **Dev URL**: `https://prototypes.sandcastle.musta.ch/trips-map-camera-animation/?dev`
+
+### Files
+```
+~/trips-map-camera-animation/          # Kyber project
+├── public/
+│   ├── app.html                       # Main prototype (vanilla HTML/CSS/JS)
+│   ├── config.local.js                # Google Maps API key + Map ID
+│   └── images/                        # All images from Figma
+│       ├── airbnb-logo.svg
+│       ├── stay-pin.svg
+│       ├── paris.png, san-francisco.png, rio.png, ...
+│       └── avatar-1.png through avatar-5.png
+├── src/
+│   ├── App.tsx                        # Iframe wrapper
+│   └── main.tsx                       # Minimal React entry
+├── manifest.json
+└── vite.config.ts
+
+~/Coding/Prototypes/Google Maps Animations/   # Original project
+├── index.html                         # Source of truth
+├── images/                            # Local copies of Figma assets
+├── config.local.js
+└── CHANGELOG.md
+```
+
+### Figma References
+- Trips Tab: `182:48977` in `Motion-Work---2026`
+- Trips Detail Page: `182:49846` in `Motion-Work---2026`
+- "Your stay" Pin: `182:94360` in `Motion-Work---2026`
+- Airbnb Logo: `182:49794` in `Motion-Work---2026`
+
+### Next Steps / Ideas
+- [ ] Add hover states that highlight corresponding map pin
+- [ ] Tune animation per route distance (short vs long haul)
+- [ ] Animate left panel content transition (slide in/out instead of crossfade)
+- [ ] Test with vector Map ID for smoother tile rendering
+- [ ] Add selected trip highlight on map (larger pin or glow)
+
+---
+
 ## Session: 2026-02-25 (Part 2) — Trips UI
 
 ### Overview
