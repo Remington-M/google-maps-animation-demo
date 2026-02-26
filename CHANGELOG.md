@@ -1,5 +1,36 @@
 # Changelog
 
+## Session: 2026-02-25
+
+### Overview
+Overhauled the match cut animation to feel more like a real film cut, added spring tuning controls, and updated defaults for long-distance routes.
+
+### Changes
+
+#### Match Cut: Coupled Position and Zoom
+- Previously, position interpolated smoothly while zoom had the hard cut — this caused the pin to appear off-center at the cut moment
+- Now position and zoom use the same `t` value, so the outgoing shot stays centered near the origin and the incoming shot is centered near the destination
+- The matching zoom levels on both sides mask the position jump, just like a real film match cut
+
+#### Spring Stiffness Control
+- Added a **Spring Stiffness** slider (10–400) in the Match Cut controls
+- Damping ratio is fixed at 1 (critically damped): `damping = 2 * sqrt(stiffness)`
+- Value display shows stiffness and approximate duration (e.g. "30 (~2300ms)")
+- Spring is now created dynamically per animation instead of using a hardcoded default
+
+#### Updated Defaults
+- **Spring stiffness**: 100 → 30 (slower, smoother ~2300ms animation)
+- **Long-distance presets** (SF→NYC, SF→Tokyo, Tokyo→Sydney):
+  - Start zoom: 3.5 (was 11–12)
+  - End zoom: 18.5 (was 11–12)
+- **Match cut levels**: Start 1 / End 1.5 (was 3/3)
+
+### GitHub
+- Added GHE remote: `git.musta.ch:remington-mcelhaney/MapCameraAnimations.git`
+- Pushed to both GitHub.com and GHE
+
+---
+
 ## Session: 2026-02-11
 
 ### Overview
